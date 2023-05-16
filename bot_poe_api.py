@@ -3,8 +3,7 @@ from typing import Generator, List, Any, Dict
 import time
 import poe
 
-from tool.util import log_dbg, log_err, log_info
-from tool.config import config
+log_dbg, log_err, log_info = print, print, print
 
 class PoeAPI:
     type: str = 'poe'
@@ -107,20 +106,13 @@ class PoeAPI:
 
         return self.init
     
-    def __init__(self) -> None:
-        self.__load_setting()
+    def __init__(self, setting: Any) -> None:
+        self.__load_setting(setting)
         self.__create_bot()
-        
-    def __try_load_trigger(self, name: str):
-        try:
-            self.trigger[name] = config.setting['poe']['trigger'][name]
-        except Exception as e:
-            log_err('fail to load poe config: {}, err: {}'.format(str(name), str(e)))
-            self.trigger[name] = []
 
-    def __load_models(self):
+    def __load_models(self, setting):
         try:
-            models = config.setting['poe']['models']
+            models = setting['models']
 
             for model_name, model_info in models.items():
                 self.models[model_name] = {}
@@ -140,24 +132,24 @@ class PoeAPI:
             self.models = {}
             log_err('fail to load poe model cfg: ' + str(e))
     
-    def __load_setting(self):
+    def __load_setting(self, setting: Any):
         try:
-            self.max_requestion = config.setting['poe']['max_requestion']
+            self.max_requestion = setting['max_requestion']
         except Exception as e:
             log_err('fail to load poe config: ' + str(e))
             self.max_requestion = 512
         try:
-            self.max_repeat_times = config.setting['poe']['max_repeat_times']
+            self.max_repeat_times = setting['max_repeat_times']
         except Exception as e:
             log_err('fail to load poe config: ' + str(e))
             self.max_repeat_times = 3
         try:
-            self.cookie_key = config.setting['poe']['cookie_p-b']
+            self.cookie_key = setting['cookie_p-b']
         except Exception as e:
             log_err('fail to load poe config: ' + str(e))
             self.cookie_key = ''
 
-        self.__load_models()
+        self.__load_models(setting)
 
 
 # call bot_ plugin
@@ -167,8 +159,7 @@ class Bot:
     bot: PoeAPI
 
     def __init__(self):
-        self.bot = PoeAPI()
-        self.type = self.bot.type
+        self.type = PoeAPI.type
 
     # when time call bot
     def is_call(self, caller: Any, ask_data: Any) -> bool:
@@ -181,10 +172,16 @@ class Bot:
         yield from self.bot.ask(question, timeout)
 
     # exit bot
-    def when_exit(self):
+    def when_exit(self, caller: Any):
         pass
 
     # init bot
-    def when_init(self):
-        pass
+    def when_init(self, caller: Any):
+        global log_info, log_dbg, log_err
+        log_info = caller.bot_log_info
+        log_dbg = caller.bot_log_dbg
+        log_err = caller.bot_log_err
+        
+        self.setting = caller.bot_load_setting(self.type)
+        self.bot = PoeAPI(self.setting)
 
