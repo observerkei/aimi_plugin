@@ -1,4 +1,3 @@
-import asyncio
 from typing import Generator, List, Any, Dict
 import time
 import poe
@@ -54,7 +53,7 @@ class PoeAPI:
         }
 
         if (not self.init) and (not self.__create_bot()):
-            log_err('fail to create qoe bot')
+            log_err(f'fail to create {self.type} bot')
             answer['code'] = -1
             return answer
 
@@ -82,7 +81,7 @@ class PoeAPI:
                 log_err('fail to ask: ' + str(e))
                 log_info('server fail, sleep 15')
                 time.sleep(15)
-                log_info("try recreate poe bot")
+                log_info(f"try recreate {self.type} bot")
                 self.__create_bot()
                 
                 answer['message'] = str(e)
@@ -99,9 +98,9 @@ class PoeAPI:
                 new_bot = poe.Client(self.cookie_key)
                 self.chatbot = new_bot
                 self.init = True
-                log_info('load poe bot: ' + str(self.chatbot.bot_names))
+                log_info(f'load {self.type} bot: ' + str(self.chatbot.bot_names))
             except Exception as e:
-                log_err('fail to init poe bot: ' + str(e))
+                log_err(f'fail to init {self.type} bot: ' + str(e))
                 self.init = False
 
         return self.init
@@ -130,23 +129,23 @@ class PoeAPI:
                     
         except Exception as e:
             self.models = {}
-            log_err('fail to load poe model cfg: ' + str(e))
+            log_err(f'fail to load {self.type} model cfg: ' + str(e))
     
     def __load_setting(self, setting: Any):
         try:
             self.max_requestion = setting['max_requestion']
         except Exception as e:
-            log_err('fail to load poe config: ' + str(e))
+            log_err(f'fail to load {self.type} config: ' + str(e))
             self.max_requestion = 512
         try:
             self.max_repeat_times = setting['max_repeat_times']
         except Exception as e:
-            log_err('fail to load poe config: ' + str(e))
+            log_err(f'fail to load {self.type} config: ' + str(e))
             self.max_repeat_times = 3
         try:
             self.cookie_key = setting['cookie_p-b']
         except Exception as e:
-            log_err('fail to load poe config: ' + str(e))
+            log_err(f'fail to load {self.type} config: ' + str(e))
             self.cookie_key = ''
 
         self.__load_models(setting)
