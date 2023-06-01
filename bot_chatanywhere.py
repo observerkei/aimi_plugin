@@ -121,6 +121,9 @@ class  ChatAnywhereAPI:
                         #log_dbg(f'recv complate: {completion}')
                         break
                     for delta_k, delta_v in event['choices'][0]['delta'].items():
+                        if delta_k != 'content':
+                            # skip none content
+                            continue
                         #log_dbg(f'recv stream: {delta_k} = {delta_v}')
                         completion[delta_k] += delta_v
                         
