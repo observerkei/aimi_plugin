@@ -9,6 +9,9 @@ class ChimeraGPTAPI:
     type: str = 'chimeragpt'
     max_requestion: int = 1024
     max_repeat_times: int = 3
+    max_request_minute_times: int = 10
+    cur_request_minute_times: int = 0
+    cur_time_seconds: int = 0
     api_key: str = ''
     api_base: str = ''
     models: Dict[str, Dict] = {}
@@ -46,13 +49,15 @@ class ChimeraGPTAPI:
     def ask(
         self,
         question: str,
+        preset: str,
         timeout: int = 360,
     ) -> Generator[dict, None, None]:
-        yield from self.api_ask(question, timeout)
+        yield from self.api_ask(question, preset, timeout)
 
     def api_ask(
         self,
         question: str,
+        preset: str,
         timeout: int = 360,
     ) -> Generator[dict, None, None]:
         answer = { 
@@ -65,22 +70,47 @@ class ChimeraGPTAPI:
             answer['code'] = -1
             return answer
 
+        now_time_seconds = int(time.time())
+        if (
+            not self.cur_time_seconds
+            or (self.cur_time_seconds + 60 < now_time_seconds) 
+        ):
+            self.cur_time_seconds = now_time_seconds
+            self.cur_request_minute_times = 0
+        else:
+            self.cur_request_minute_times += 1
+        
+        if (self.cur_request_minute_times >= self.max_request_minute_times):
+            answer['message'] = f'to many request, now: {self.cur_request_minute_times}'
+            answer['code'] = 0
+            yield answer
+            return
+
         req_cnt = 0
         bot_model = self.__get_bot_model(question)
-        
+        log_dbg(f"use model: {bot_model}")
+
+        messages = [
+            {'role': 'user', 'content': question}
+        ]
+
         while req_cnt < self.max_repeat_times:
             req_cnt += 1
             answer['code'] = 1
             
             try:
                 log_dbg('try ask: ' + str(question))
+                res = None
                 for chunk in openai.ChatCompletion.create(
                     model=bot_model,
-                    messages=[{'role': 'user', 'content': question}],
+                    messages=messages,
                     stream=True
                 ):
                     answer['message'] += chunk.choices[0].delta.content
+                    res = chunk
                     yield answer
+
+                log_dbg(f"res: {str(res)}")
 
                 answer['code'] = 0
                 yield answer
@@ -168,6 +198,11 @@ class ChimeraGPTAPI:
         except Exception as e:
             log_err(f'fail to load {self.type} config: ' + str(e))
             self.api_base = ''
+        try:
+            self.max_request_minute_times = setting['max_request_minute_times']
+        except Exception as e:
+            log_err(f'fail to load {self.type} config: ' + str(e))
+            self.max_request_minute_times = 10
 
         self.__load_models(setting)
 
@@ -189,7 +224,8 @@ class Bot:
     # ask bot
     def ask(self, caller: Any, ask_data: Any, timeout: int = 60) -> Generator[dict, None, None]:
         question = caller.bot_get_question(ask_data)
-        yield from self.bot.ask(question, timeout)
+        preset = caller.bot_get_preset(ask_data)
+        yield from self.bot.ask(question, preset, timeout)
 
     # exit bot
     def when_exit(self, caller: Any):
