@@ -52,20 +52,34 @@ class  ChatAnywhereAPI:
         
         return bot_model
 
+    # get support model
+    def get_models(
+        self
+    ) -> List[str]:
+        if not self.init:
+            return []
+    
+        models = []
+
+        for model_name, model_info in self.models.items():
+            if 'default' == model_name:
+                continue
+            models.appand(model_info.model)
+        
+        return models
+
     def ask(
         self,
-        question: str,
-        preset: str,
-        history: List[Dict] = [],
+        model: str,
+        messages: List[Dict] = [],
         timeout: int = 360,
     ) -> Generator[dict, None, None]:
-        yield from self.api_ask(question, preset, history, timeout)
+        yield from self.api_ask(model, messages, timeout)
 
     def api_ask(
         self,
-        question: str,
-        preset: str = '',
-        history: List[Dict] = [],
+        bot_model: str,
+        messages: List[Dict] = [],
         timeout: int = 360,
     ) -> Generator[dict, None, None]:
         answer = { 
@@ -95,12 +109,12 @@ class  ChatAnywhereAPI:
             return
 
         req_cnt = 0
-        bot_model = self.__get_bot_model(question)
+        question = messages[-1]['content']
+        if not bot_model or not len(bot_model):
+            bot_model = self.__get_bot_model(question)
+        
         log_dbg(f"use model: {bot_model}")
 
-        messages = [{ 'role': 'system', 'content': preset }]
-        messages.extend(history)
-        messages.append({ 'role': 'user', 'content': question })
         log_dbg(f'msg: {str(messages)}')
 
         while req_cnt < self.max_repeat_times:
@@ -265,6 +279,13 @@ class Bot:
         question = caller.bot_get_question(ask_data)
         return self.bot.is_call(question)
 
+    # get support model
+    def get_models(
+        self,
+        caller: Any
+    ) -> List[str]:
+        return self.bot.get_models()
+
     # ask bot
     def ask(
         self, 
@@ -272,10 +293,9 @@ class Bot:
         ask_data: Any, 
         timeout: int = 60
     ) -> Generator[dict, None, None]:
-        question = caller.bot_get_question(ask_data)
-        preset = caller.bot_get_preset(ask_data)
-        history = caller.bot_get_history(ask_data)
-        yield from self.bot.ask(question, preset, history, timeout)
+        model = caller.bot_get_model(ask_data)
+        messages = caller.bot_get_messages(ask_data)
+        yield from self.bot.ask(model, messages, timeout)
 
     # exit bot
     def when_exit(

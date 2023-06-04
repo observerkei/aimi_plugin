@@ -35,6 +35,23 @@ class PoeAPI:
         
         return self.models['default']['model']
 
+    # get support model
+    def get_models(
+        self
+    ) -> List[str]:
+        if not self.init:
+            return []
+    
+        models = []
+
+        for model_name, model_info in self.models.items():
+            if 'default' == model_name:
+                continue
+            models.appand(model_info.model)
+        
+        return models
+
+    
     def ask(
         self,
         question: str,
@@ -164,6 +181,13 @@ class Bot:
     def is_call(self, caller: Any, ask_data: Any) -> bool:
         question = caller.bot_get_question(ask_data)
         return self.bot.is_call(question)
+
+    # get support model
+    def get_models(
+        self,
+        caller: Any
+    ) -> List[str]:
+        return self.bot.get_models()
 
     # ask bot
     def ask(self, caller: Any, ask_data: Any, timeout: int = 60) -> Generator[dict, None, None]:

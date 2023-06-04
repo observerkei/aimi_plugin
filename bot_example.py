@@ -1,4 +1,4 @@
-from typing import Any, Generator
+from typing import Any, Generator, List
 
 log_dbg, log_err, log_info = print, print, print
 
@@ -19,6 +19,13 @@ class Bot:
         if trigger in question:
             return True
         return False
+
+    # get support model
+    def get_models(
+        self,
+        caller: Any
+    ) -> List[str]:
+        return [self.type]
 
     # ask bot
     def ask(self, caller: Any, ask_data) -> Generator[dict, None, None]:
