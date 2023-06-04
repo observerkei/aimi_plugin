@@ -47,7 +47,7 @@ class PoeAPI:
         for model_name, model_info in self.models.items():
             if 'default' == model_name:
                 continue
-            models.appand(model_info.model)
+            models.append(model_info.model)
         
         return models
 
