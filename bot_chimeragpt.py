@@ -26,7 +26,7 @@ class ChimeraGPTAPI:
 
     def __get_bot_model(self, question: str):
         bot_model = self.models['default']['model']
-        bot_model_len = 0
+        call_model_len = 0
 
         for model_name, model_info in self.models.items():
             if 'default' == model_name:
@@ -39,10 +39,11 @@ class ChimeraGPTAPI:
             for call in model_trigger:
                 if not (call.lower() in question.lower()):
                     continue
-                if len(call) < bot_model_len:
+                if len(call) < call_model_len:
                     continue
+                log_dbg(f"check call: {call} model: {model_info['model']}")
                 bot_model = model_info['model']
-                bot_model_len = len(bot_model)
+                call_model_len = len(call)
         
         return bot_model
 
