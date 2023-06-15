@@ -2,11 +2,12 @@ from typing import Any, Generator, List
 
 log_dbg, log_err, log_info = print, print, print
 
+
 # call bot_ plugin
 class Bot:
     # This has to be globally unique
-    type: str = 'globally_unique_name'
-    trigger: str = '#globally_unique_name'
+    type: str = "globally_unique_name"
+    trigger: str = "#globally_unique_name"
     bot: Any
     setting: Any
 
@@ -21,10 +22,7 @@ class Bot:
         return False
 
     # get support model
-    def get_models(
-        self,
-        caller: Any
-    ) -> List[str]:
+    def get_models(self, caller: Any) -> List[str]:
         return [self.type]
 
     # ask bot
@@ -36,7 +34,7 @@ class Bot:
 
     # exit bot
     def when_exit(self, caller: Any):
-        log_info('exit')
+        log_info("exit")
 
     # init bot
     def when_init(self, caller: Any):
@@ -44,6 +42,6 @@ class Bot:
         log_info = caller.bot_log_info
         log_dbg = caller.bot_log_dbg
         log_err = caller.bot_log_err
-        
-        log_info('init')
+
+        log_info("init")
         self.setting = caller.bot_load_setting(self.type)
