@@ -175,6 +175,10 @@ class Bot:
     def __init__(self):
         self.type = PoeAPI.type
 
+    @property
+    def init(self) -> bool:
+        return self.bot.init
+
     # when time call bot
     def is_call(self, caller: Any, ask_data: Any) -> bool:
         question = caller.bot_get_question(ask_data)
