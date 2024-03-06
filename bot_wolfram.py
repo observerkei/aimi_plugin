@@ -165,7 +165,7 @@ class WolframAPI:
 
         return question
 
-    def ask(self, question) -> Generator[dict, None, None]:
+    def ask(self, question, timeout) -> Generator[dict, None, None]:
         answer = {"code": 1, "message": ""}
 
         if not self.init:
@@ -249,7 +249,6 @@ class WolframAPI:
         # answer['message'] += cq_image
 
 
-
 # call bot_ plugin
 class Bot:
     # This has to be globally unique
@@ -276,9 +275,8 @@ class Bot:
     def ask(
         self, caller: Any, ask_data: Any, timeout: int = 60
     ) -> Generator[dict, None, None]:
-        model = caller.bot_get_model(ask_data)
-        messages = caller.bot_get_messages(ask_data)
-        yield from self.bot.ask(model, messages, timeout)
+        question = caller.bot_get_question(ask_data)
+        yield from self.bot.ask(question, timeout)
 
     # exit bot
     def when_exit(self, caller: Any):
