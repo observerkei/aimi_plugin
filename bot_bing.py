@@ -77,7 +77,7 @@ class BingAPI:
             response = ""
             async for final, response in self.chatbot.ask_stream(
                 prompt=question,
-                conversation_style=conversation_style,
+                # conversation_style=conversation_style,
                 wss_link=self.wss_link,
             ):
                 if not response:
@@ -104,7 +104,8 @@ class BingAPI:
             self.cur_messages = 0
             self.max_messages = 0
 
-            await self.__bot_reload()
+            self.init = False
+            await self.__bot_create()
         return False
 
     class ConversationStyle:
@@ -176,7 +177,7 @@ class BingAPI:
 
                 async for final, response in self.chatbot.ask_stream(
                     prompt=question,
-                    conversation_style=conversation_style,
+                    # conversation_style=conversation_style,
                     wss_link=self.wss_link,
                 ):
                     if not response:
@@ -254,18 +255,20 @@ class BingAPI:
 
             except Exception as e:
                 log_err("fail to ask: " + str(e))
-                log_info("server fail, sleep 15")
-                time.sleep(5)
-
-                self.cur_messages = 0
-                self.max_messages = 0
-                self.init = False
-
-                await self.__bot_reload()
+                log_info("server fail")
 
                 answer["message"] = str(e)
                 answer["code"] = -1
                 yield answer
+                self.cur_messages = 0
+                self.max_messages = 0
+
+                if req_cnt < self.max_repeat_times:
+                    log_dbg("sleep 5s...")
+                    time.sleep(5)
+
+                self.init = False
+                await self.__bot_create()
 
             # request complate.
             if answer["code"] == 0:
@@ -299,19 +302,21 @@ class BingAPI:
         asyncio.set_event_loop(self.loop)
         self.loop = asyncio.get_event_loop()
 
-        self.models = [
+        self.models = ["Microsoft New Bing"]
+        [
             self.ConversationStyle.creative,
             self.ConversationStyle.balanced,
             self.ConversationStyle.precise,
         ]
 
     async def __bot_create(self):
+        if self.init:
+            log_dbg("bing arealy init")
+            return
+
         try:
-            cookies = []
-            with open(self.cookie_path, "r") as f:
-                cookies = json.load(f)
-            cookies_list = cookies
-            self.chatbot = await Chatbot().create(None, cookies_list)
+            cookies = json.loads(open(self.cookie_path, encoding="utf-8").read())
+            self.chatbot = await Chatbot().create(cookies=cookies)
             self.init = True
             log_info(f"{self.type}: init done")
         except Exception as e:
@@ -319,19 +324,6 @@ class BingAPI:
             self.init = False
 
         return self.init
-
-    async def __bot_reload(self):
-        if not self.init:
-            self.__bot_create()
-            return
-        log_dbg("try reload chatbing bot")
-        try:
-            await self.chatbot.close()
-        except:
-            log_err("fail to close edge")
-
-        log_info("create new edge.")
-        await self.__bot_create()
 
     def __load_setting(self, setting):
 
@@ -385,8 +377,6 @@ class BingAPI:
         except Exception as e:
             log_err("fail to load bing config: " + str(e))
             self.trigger[self.ConversationStyle.precise] = []
-
-
 
 
 # call bot_ plugin
