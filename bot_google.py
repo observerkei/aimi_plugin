@@ -275,7 +275,7 @@ To use the calculator wrap an equation in <calc> tags like this:
 
             except Exception as e:
                 self.init_gemini = False
-                log_err(f"fail to create api google: {e}")
+                log_err(f"fail to create gemini google: {e}")
                 
 
         if len(self.api_key) and not self.init_api:
