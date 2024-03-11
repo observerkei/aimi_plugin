@@ -2,7 +2,9 @@ import time
 from typing import Generator, List, Dict, Any
 from openai import OpenAI
 
-from tool.util import log_dbg, log_err, log_info
+from aimi_plugin.bot.type import Bot as BotType
+
+log_dbg, log_err, log_info = print, print, print
 
 
 class OpenAIAPI:
@@ -343,7 +345,7 @@ class OpenAIAPI:
 
 
 # call bot_ plugin
-class Bot:
+class Bot(BotType):
     # This has to be globally unique
     type: str
     bot: OpenAIAPI
@@ -356,17 +358,17 @@ class Bot:
         return self.bot.init
 
     # when time call bot
-    def is_call(self, caller: Any, ask_data: Any) -> bool:
+    def is_call(self, caller: BotType, ask_data: Any) -> bool:
         question = caller.bot_get_question(ask_data)
         return self.bot.is_call(question)
 
     # get support model
-    def get_models(self, caller: Any) -> List[str]:
+    def get_models(self, caller: BotType) -> List[str]:
         return self.bot.get_models()
 
     # ask bot
     def ask(
-        self, caller: Any, ask_data: Any, timeout: int = 60
+        self, caller: BotType, ask_data: Any, timeout: int = 60
     ) -> Generator[dict, None, None]:
         model = caller.bot_get_model(ask_data)
         question = caller.bot_get_question(ask_data)
@@ -381,11 +383,11 @@ class Bot:
         )
 
     # exit bot
-    def when_exit(self, caller: Any):
+    def when_exit(self, caller: BotType):
         pass
 
     # init bot
-    def when_init(self, caller: Any):
+    def when_init(self, caller: BotType):
         global log_info, log_dbg, log_err
         log_info = caller.bot_log_info
         log_dbg = caller.bot_log_dbg

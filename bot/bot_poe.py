@@ -1,20 +1,17 @@
 from typing import Generator, List, Any, Dict
 import time
-import openai
-import requests
+import poe
 
 log_dbg, log_err, log_info = print, print, print
+from aimi_plugin.bot.type import Bot as BotType
 
 
-class ChimeraGPTAPI:
-    type: str = "chimeragpt"
+class PoeAPI:
+    type: str = "poe"
+    chatbot: Any
     max_requestion: int = 1024
     max_repeat_times: int = 3
-    max_request_minute_times: int = 10
-    cur_request_minute_times: int = 0
-    cur_time_seconds: int = 0
-    api_key: str = ""
-    api_base: str = ""
+    cookie_key: str = ""
     models: Dict[str, Dict] = {}
     init: bool = False
 
@@ -26,9 +23,6 @@ class ChimeraGPTAPI:
         return False
 
     def __get_bot_model(self, question: str):
-        bot_model = self.models["default"]["model"]
-        call_model_len = 0
-
         for model_name, model_info in self.models.items():
             if "default" == model_name:
                 continue
@@ -38,15 +32,10 @@ class ChimeraGPTAPI:
                 continue
 
             for call in model_trigger:
-                if not (call.lower() in question.lower()):
-                    continue
-                if len(call) < call_model_len:
-                    continue
-                log_dbg(f"check call: {call} model: {model_info['model']}")
-                bot_model = model_info["model"]
-                call_model_len = len(call)
+                if call.lower() in question.lower():
+                    return model_info["model"]
 
-        return bot_model
+        return self.models["default"]["model"]
 
     # get support model
     def get_models(self) -> List[str]:
@@ -81,24 +70,8 @@ class ChimeraGPTAPI:
             answer["code"] = -1
             return answer
 
-        now_time_seconds = int(time.time())
-        if not self.cur_time_seconds or (self.cur_time_seconds + 60 < now_time_seconds):
-            self.cur_time_seconds = now_time_seconds
-            self.cur_request_minute_times = 0
-        else:
-            self.cur_request_minute_times += 1
-
-        if self.cur_request_minute_times >= self.max_request_minute_times:
-            answer["message"] = f"to many request, now: {self.cur_request_minute_times}"
-            answer["code"] = 0
-            yield answer
-            return
-
         req_cnt = 0
         bot_model = self.__get_bot_model(question)
-        log_dbg(f"use model: {bot_model}")
-
-        messages = [{"role": "user", "content": question}]
 
         while req_cnt < self.max_repeat_times:
             req_cnt += 1
@@ -106,15 +79,10 @@ class ChimeraGPTAPI:
 
             try:
                 log_dbg("try ask: " + str(question))
-                res = None
-                for chunk in openai.ChatCompletion.create(
-                    model=bot_model, messages=messages, stream=True
-                ):
-                    answer["message"] += chunk.choices[0].delta.content
-                    res = chunk
-                    yield answer
 
-                log_dbg(f"res: {str(res)}")
+                for chunk in self.chatbot.send_message(bot_model, question):
+                    answer["message"] = chunk["text"]
+                    yield answer
 
                 answer["code"] = 0
                 yield answer
@@ -135,31 +103,12 @@ class ChimeraGPTAPI:
                 break
 
     def __create_bot(self):
-        if (self.api_key and len(self.api_key)) and (
-            self.api_base and len(self.api_base)
-        ):
+        if self.cookie_key and len(self.cookie_key):
             try:
-                api_status = "https://chimeragpt.adventblocks.cc/"
-                response = requests.get(api_status)
-                if "Api works!" in response.text:
-                    log_info(f"load {self.type} bot done.")
-                else:
-                    raise Exception(
-                        f"fail to init {self.type}, res: {str(response.text)}"
-                    )
-
-                openai.api_key = self.api_key
-                openai.api_base = self.api_base
-
-                models = openai.Model.list(model_type="chat")
-                for model in models["data"]:
-                    log_dbg(f"avalible model: {str(model.id)}")
-
-                    if not (model.id in self.models):
-                        self.models[model.id] = {}
-                        self.models[model.id]["model"] = model.id
-
+                new_bot = poe.Client(self.cookie_key)
+                self.chatbot = new_bot
                 self.init = True
+                log_info(f"load {self.type} bot: " + str(self.chatbot.bot_names))
             except Exception as e:
                 log_err(f"fail to init {self.type} bot: " + str(e))
                 self.init = False
@@ -210,63 +159,53 @@ class ChimeraGPTAPI:
             log_err(f"fail to load {self.type} config: " + str(e))
             self.max_repeat_times = 3
         try:
-            self.api_key = setting["api_key"]
+            self.cookie_key = setting["cookie_p-b"]
         except Exception as e:
             log_err(f"fail to load {self.type} config: " + str(e))
-            self.api_key = ""
-        try:
-            self.api_base = setting["api_base"]
-        except Exception as e:
-            log_err(f"fail to load {self.type} config: " + str(e))
-            self.api_base = ""
-        try:
-            self.max_request_minute_times = setting["max_request_minute_times"]
-        except Exception as e:
-            log_err(f"fail to load {self.type} config: " + str(e))
-            self.max_request_minute_times = 10
+            self.cookie_key = ""
 
         self.__load_models(setting)
 
 
 # call bot_ plugin
-class Bot:
+class Bot(BotType):
     # This has to be globally unique
     type: str
-    bot: ChimeraGPTAPI
+    bot: PoeAPI
 
     def __init__(self):
-        self.type = ChimeraGPTAPI.type
+        self.type = PoeAPI.type
 
     @property
     def init(self) -> bool:
         return self.bot.init
 
     # when time call bot
-    def is_call(self, caller: Any, ask_data: Any) -> bool:
+    def is_call(self, caller: BotType, ask_data: Any) -> bool:
         question = caller.bot_get_question(ask_data)
         return self.bot.is_call(question)
 
     # get support model
-    def get_models(self, caller: Any) -> List[str]:
+    def get_models(self, caller: BotType) -> List[str]:
         return self.bot.get_models()
 
     # ask bot
     def ask(
-        self, caller: Any, ask_data: Any, timeout: int = 60
+        self, caller: BotType, ask_data: Any, timeout: int = 60
     ) -> Generator[dict, None, None]:
         question = caller.bot_get_question(ask_data)
         yield from self.bot.ask(question, timeout)
 
     # exit bot
-    def when_exit(self, caller: Any):
+    def when_exit(self, caller: BotType):
         pass
 
     # init bot
-    def when_init(self, caller: Any):
+    def when_init(self, caller: BotType):
         global log_info, log_dbg, log_err
         log_info = caller.bot_log_info
         log_dbg = caller.bot_log_dbg
         log_err = caller.bot_log_err
 
         self.setting = caller.bot_load_setting(self.type)
-        self.bot = ChimeraGPTAPI(self.setting)
+        self.bot = PoeAPI(self.setting)

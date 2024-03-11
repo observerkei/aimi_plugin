@@ -1,20 +1,26 @@
 from typing import Generator, List, Any, Dict
 import time
-import poe
+import openai
+import requests
+
+from aimi_plugin.bot.type import Bot as BotType
 
 log_dbg, log_err, log_info = print, print, print
 
 
-class PoeAPI:
-    type: str = "poe"
-    chatbot: Any
+class ChatAnywhereAPI:
+    type: str = "chatanywhere"
     max_requestion: int = 1024
     max_repeat_times: int = 3
-    cookie_key: str = ""
+    max_request_minute_times: int = 10
+    cur_request_minute_times: int = 0
+    cur_time_seconds: int = 0
+    api_key: str = ""
+    api_base: str = ""
     models: Dict[str, Dict] = {}
     init: bool = False
 
-    def is_call(self, question) -> bool:
+    def is_call(self, question: str) -> bool:
         for default in self.models["default"]["trigger"]:
             if default.lower() in question.lower():
                 return True
@@ -22,6 +28,9 @@ class PoeAPI:
         return False
 
     def __get_bot_model(self, question: str):
+        bot_model = self.models["default"]["model"]
+        bot_model_len = 0
+
         for model_name, model_info in self.models.items():
             if "default" == model_name:
                 continue
@@ -31,10 +40,14 @@ class PoeAPI:
                 continue
 
             for call in model_trigger:
-                if call.lower() in question.lower():
-                    return model_info["model"]
+                if not (call.lower() in question.lower()):
+                    continue
+                if len(call) < bot_model_len:
+                    continue
+                bot_model = model_info["model"]
+                bot_model_len = len(bot_model)
 
-        return self.models["default"]["model"]
+        return bot_model
 
     # get support model
     def get_models(self) -> List[str]:
@@ -52,14 +65,16 @@ class PoeAPI:
 
     def ask(
         self,
-        question: str,
+        model: str,
+        messages: List[Dict] = [],
         timeout: int = 360,
     ) -> Generator[dict, None, None]:
-        yield from self.api_ask(question, timeout)
+        yield from self.api_ask(model, messages, timeout)
 
     def api_ask(
         self,
-        question: str,
+        bot_model: str,
+        messages: List[Dict] = [],
         timeout: int = 360,
     ) -> Generator[dict, None, None]:
         answer = {"message": "", "code": 1}
@@ -69,8 +84,27 @@ class PoeAPI:
             answer["code"] = -1
             return answer
 
+        now_time_seconds = int(time.time())
+        if not self.cur_time_seconds or (self.cur_time_seconds + 60 < now_time_seconds):
+            self.cur_time_seconds = now_time_seconds
+            self.cur_request_minute_times = 0
+        else:
+            self.cur_request_minute_times += 1
+
+        if self.cur_request_minute_times >= self.max_request_minute_times:
+            answer["message"] = f"to many request, now: {self.cur_request_minute_times}"
+            answer["code"] = 0
+            yield answer
+            return
+
         req_cnt = 0
-        bot_model = self.__get_bot_model(question)
+        question = messages[-1]["content"]
+        if not bot_model or not len(bot_model):
+            bot_model = self.__get_bot_model(question)
+
+        log_dbg(f"use model: {bot_model}")
+
+        log_dbg(f"msg: {str(messages)}")
 
         while req_cnt < self.max_repeat_times:
             req_cnt += 1
@@ -78,10 +112,30 @@ class PoeAPI:
 
             try:
                 log_dbg("try ask: " + str(question))
+                res = None
 
-                for chunk in self.chatbot.send_message(bot_model, question):
-                    answer["message"] = chunk["text"]
-                    yield answer
+                completion = {"role": "", "content": ""}
+                for event in openai.ChatCompletion.create(
+                    model=bot_model,
+                    messages=messages,
+                    stream=True,
+                ):
+                    if event["choices"][0]["finish_reason"] == "stop":
+                        # log_dbg(f'recv complate: {completion}')
+                        break
+                    for delta_k, delta_v in event["choices"][0]["delta"].items():
+                        if delta_k != "content":
+                            # skip none content
+                            continue
+                        # log_dbg(f'recv stream: {delta_k} = {delta_v}')
+                        completion[delta_k] += delta_v
+
+                        answer["message"] = completion[delta_k]
+                        yield answer
+
+                    res = event
+
+                log_dbg(f"res: {str(res)}")
 
                 answer["code"] = 0
                 yield answer
@@ -101,13 +155,27 @@ class PoeAPI:
             if answer["code"] == 0:
                 break
 
-    def __create_bot(self):
-        if self.cookie_key and len(self.cookie_key):
+    def __create_bot(self) -> bool:
+        if (self.api_key and len(self.api_key)) and (
+            self.api_base and len(self.api_base)
+        ):
             try:
-                new_bot = poe.Client(self.cookie_key)
-                self.chatbot = new_bot
+                """
+                api_status = 'https://chimeragpt.adventblocks.cc/'
+                response = requests.get(api_status)
+                if 'Api works!' in response.text:
+                    log_info(f'load {self.type} bot done.')
+                else:
+                    raise Exception(f"fail to init {self.type}, res: {str(response.text)}")
+                """
+                openai.api_key = self.api_key
+                openai.api_base = self.api_base
+
+                models = openai.Model.list()
+                for model in models["data"]:
+                    log_dbg(f"avalible model: {str(model['id'])}")
+
                 self.init = True
-                log_info(f"load {self.type} bot: " + str(self.chatbot.bot_names))
             except Exception as e:
                 log_err(f"fail to init {self.type} bot: " + str(e))
                 self.init = False
@@ -158,53 +226,64 @@ class PoeAPI:
             log_err(f"fail to load {self.type} config: " + str(e))
             self.max_repeat_times = 3
         try:
-            self.cookie_key = setting["cookie_p-b"]
+            self.api_key = setting["api_key"]
         except Exception as e:
             log_err(f"fail to load {self.type} config: " + str(e))
-            self.cookie_key = ""
+            self.api_key = ""
+        try:
+            self.api_base = setting["api_base"]
+        except Exception as e:
+            log_err(f"fail to load {self.type} config: " + str(e))
+            self.api_base = ""
+        try:
+            self.max_request_minute_times = setting["max_request_minute_times"]
+        except Exception as e:
+            log_err(f"fail to load {self.type} config: " + str(e))
+            self.max_request_minute_times = 10
 
         self.__load_models(setting)
 
 
 # call bot_ plugin
-class Bot:
+class Bot(BotType):
     # This has to be globally unique
     type: str
-    bot: PoeAPI
+    bot: ChatAnywhereAPI
 
     def __init__(self):
-        self.type = PoeAPI.type
+        self.type = ChatAnywhereAPI.type
 
     @property
     def init(self) -> bool:
         return self.bot.init
 
     # when time call bot
-    def is_call(self, caller: Any, ask_data: Any) -> bool:
+    def is_call(self, caller: BotType, ask_data: Any) -> bool:
         question = caller.bot_get_question(ask_data)
         return self.bot.is_call(question)
 
     # get support model
-    def get_models(self, caller: Any) -> List[str]:
+    def get_models(self, caller: BotType) -> List[str]:
         return self.bot.get_models()
 
     # ask bot
     def ask(
-        self, caller: Any, ask_data: Any, timeout: int = 60
+        self, caller: BotType, ask_data: Any, timeout: int = 60
     ) -> Generator[dict, None, None]:
-        question = caller.bot_get_question(ask_data)
-        yield from self.bot.ask(question, timeout)
+        model = caller.bot_get_model(ask_data)
+        messages = caller.bot_get_messages(ask_data)
+        yield from self.bot.ask(model, messages, timeout)
 
     # exit bot
-    def when_exit(self, caller: Any):
+    def when_exit(self, caller: BotType):
         pass
 
     # init bot
-    def when_init(self, caller: Any):
+    def when_init(self, caller: BotType):
         global log_info, log_dbg, log_err
         log_info = caller.bot_log_info
         log_dbg = caller.bot_log_dbg
         log_err = caller.bot_log_err
 
         self.setting = caller.bot_load_setting(self.type)
-        self.bot = PoeAPI(self.setting)
+        self.bot = ChatAnywhereAPI(self.setting)
