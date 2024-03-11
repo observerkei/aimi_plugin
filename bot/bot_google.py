@@ -88,6 +88,7 @@ class GoogleAPI:
             answer["code"] = 1
 
             try:
+                log_dbg("try ask: " + str(question))
                 model = self.gemini.GenerativeModel(model)
 
                 message = ""
