@@ -1,13 +1,8 @@
-import os
 import time
 from typing import Generator, List, Any
-from contextlib import suppress
-import pprint
-from gemini import Gemini
-import asyncio
-from os import environ
 
 from aimi_plugin.bot.type import Bot as BotType
+from aimi_plugin.bot.type import BotAskData
 
 log_dbg, log_err, log_info = print, print, print
 
@@ -30,7 +25,6 @@ class GoogleAPI:
     models: List[str] = []
     models_api: List[str] = []
     models_gemini: List[str] = []
-    loop: Any
 
     def is_call(self, question) -> bool:
         for call in self.trigger:
@@ -51,32 +45,73 @@ class GoogleAPI:
     def get_models(self) -> List[str]:
         return self.models
 
+    def make_link_think(
+        self,
+        question: str,
+        aimi_name: str = "None",
+        nickname: str = "",
+        preset: str = "",
+        history: str = "",
+    ) -> str:
+        link_think = f"""
+preset: {{
+\"{preset}\"
+}}.
+
+Please focus only on the latest news. History follows: {{
+{history}
+}}
+
+Please answer the following question based on the preset, 
+the latest conversation history, and your previous answers.
+and without starting with '{aimi_name}:'
+You should extract my question directly from the structure here and answer it directly: {{
+{nickname} said: '{question}'
+}}
+"""
+        return link_think
+
     def ask(
         self,
         question: str,
         model: str = "",
+        aimi_name: str = "A",
+        nickname: str = "K",
+        preset: str = "",
+        history: str = "",
         timeout: int = 5,
     ) -> Generator[dict, None, None]:
 
-        if not len(model) and len(self.models):
+        if model not in self.models and len(self.models):
             if len(self.models_gemini):
                 model = self.models_gemini[0]
             else:
                 model = self.models[0]
+
+        if not preset.isspace():
+            question = self.make_link_think(
+                question=question,
+                aimi_name=aimi_name,
+                nickname=nickname,
+                preset=preset,
+                history=history,
+            )
+
+        log_dbg(f"use model: {model}")
 
         if model in self.models_gemini:
             yield from self.ask_gemini(question, model, timeout)
         elif model in self.models_api:
             yield from self.api_ask(question, model, timeout)
         else:
-            yield from self.__fuck_async(self.web_ask(question, timeout))
+            yield from self.web_ask(question, timeout)
 
     def ask_gemini(
         self, question: str, model: str, timeout: int = 5
     ) -> Generator[dict, None, None]:
         answer = {"message": "", "code": 1}
 
-        if (not self.init_gemini) and self.__fuck_async(self.__bot_create()):
+        if (not self.init_gemini) and self.__bot_create():
             log_err("fail to create gemini bot")
             answer["code"] = -1
             return answer
@@ -90,12 +125,42 @@ class GoogleAPI:
             try:
                 log_dbg("try ask: " + str(question))
                 model = self.gemini.GenerativeModel(model)
-
-                message = ""
-                for chunk in model.generate_content(question, stream=True):
-                    message += chunk.text
-                    answer["message"] = message
+                safety_settings = [
+                    {
+                        "category": "HARM_CATEGORY_HARASSMENT",
+                        "threshold": "BLOCK_NONE",
+                    },
+                    {
+                        "category": "HARM_CATEGORY_HATE_SPEECH",
+                        "threshold": "BLOCK_NONE",
+                    },
+                    {
+                        "category": "HARM_CATEGORY_SEXUALLY_EXPLICIT",
+                        "threshold": "BLOCK_NONE",
+                    },
+                    {
+                        "category": "HARM_CATEGORY_DANGEROUS_CONTENT",
+                        "threshold": "BLOCK_NONE",
+                    },
+                ]
+                response = {}
+                for chunk in model.generate_content(
+                    question,
+                    stream=False,
+                    safety_settings=safety_settings,
+                ):
+                    response = chunk
+                    answer["message"] = chunk.text
                     yield answer
+
+                log_dbg(f"res: {str(response.text)}")
+
+                # If the response doesn't contain text, check if the prompt was blocked.
+                log_dbg(f"prompt_feedback:\n{response.prompt_feedback}")
+                # Also check the finish reason to see if the response was blocked.
+                log_dbg("finish_reason: " + str(response.candidates[0].finish_reason))
+                # If the finish reason was SAFETY, the safety ratings have more details.
+                log_dbg(f"safety_ratings:\n" + str(response.candidates[0].safety_ratings))
 
                 answer["code"] = 0
                 yield answer
@@ -113,7 +178,7 @@ class GoogleAPI:
 
                 log_info("reload bot")
                 self.init_gemini = False
-                self.__fuck_async(self.__bot_create())
+                self.__bot_create()
 
             # request complate.
             if answer["code"] == 0:
@@ -127,7 +192,7 @@ class GoogleAPI:
     ) -> Generator[dict, None, None]:
         answer = {"message": "", "code": 1}
 
-        if (not self.init_api) and self.__fuck_async(self.__bot_create()):
+        if (not self.init_api) and self.__bot_create():
             log_err("fail to create google api bot")
             answer["code"] = -1
             return answer
@@ -196,13 +261,13 @@ To use the calculator wrap an equation in <calc> tags like this:
 
                 log_info("reload bot")
                 self.init_api = False
-                self.__fuck_async(self.__bot_create())
+                self.__bot_create()
 
             # request complate.
             if answer["code"] == 0:
                 break
 
-    async def web_ask(
+    def web_ask(
         self,
         question: str,
         timeout: int = 360,
@@ -246,13 +311,13 @@ To use the calculator wrap an equation in <calc> tags like this:
 
                 log_info("reload bing")
                 self.init_web = False
-                await self.__bot_create()
+                self.__bot_create()
 
             # request complate.
             if answer["code"] == 0:
                 break
 
-    async def __bot_create(self):
+    def __bot_create(self):
 
         if len(self.api_key) and not self.init_gemini:
             try:
@@ -299,50 +364,13 @@ To use the calculator wrap an equation in <calc> tags like this:
                 self.init_api = False
                 log_err(f"fail to create api google: {e}")
 
-        if (
-            False
-            and not self.init_web
-            and len(self.cookie_1PSID)
-            and len(self.cookie_1PSIDTS)
-            and len(self.cookie_NID)
-        ):
-            try:
-                cookies = {
-                    "__Secure-1PSID": self.cookie_1PSID,
-                    "__Secure-1PSIDTS": self.cookie_1PSIDTS,
-                    "NID": self.cookie_NID,
-                }
-
-                self.webchat = Gemini(cookie_fp=self.cookie_file)
-                self.init_web = True
-                self.models.append(f"Gemini")
-                log_dbg("google web init done")
-            except Exception as e:
-                self.init_web = False
-                log_err(f"fail to create web google: {e}")
-
         return not self.init
-
-    def __fuck_async(self, async_gen):
-        while True:
-            try:
-                yield self.loop.run_until_complete(async_gen.__anext__())
-            except StopAsyncIteration:
-                log_dbg("stop: " + str(StopAsyncIteration))
-                break
-            except Exception as e:
-                log_dbg("fail to get res " + str(e))
-                break
 
     def __init__(self, setting) -> None:
         self.__load_setting(setting)
 
         try:
-            asyncio.run(self.__bot_create())
-
-            self.loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(self.loop)
-            self.loop = asyncio.get_event_loop()
+            self.__bot_create()
 
         except Exception as e:
             log_err("fail to init google: " + str(e))
@@ -401,21 +429,23 @@ class Bot(BotType):
         return self.bot.init
 
     # when time call bot
-    def is_call(self, caller: BotType, ask_data: Any) -> bool:
-        question = caller.bot_get_question(ask_data)
-        return self.bot.is_call(question)
+    def is_call(self, caller: BotType, ask_data: BotAskData) -> bool:
+        return self.bot.is_call(ask_data.question)
 
     # get support model
     def get_models(self, caller: BotType) -> List[str]:
         return self.bot.get_models()
 
     # ask bot
-    def ask(
-        self, caller: BotType, ask_data: Any, timeout: int = 60
-    ) -> Generator[dict, None, None]:
-        question = caller.bot_get_question(ask_data)
-        model = caller.bot_get_model(ask_data)
-        yield from self.bot.ask(question, model, timeout)
+    def ask(self, caller: BotType, ask_data: BotAskData) -> Generator[dict, None, None]:
+        yield from self.bot.ask(
+            question=ask_data.question,
+            model=ask_data.model,
+            timeout=ask_data.timeout,
+            nickname=ask_data.nickname,
+            preset=ask_data.preset,
+            history=ask_data.history,
+        )
 
     # exit bot
     def when_exit(self, caller: BotType):

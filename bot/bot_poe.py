@@ -4,6 +4,7 @@ import poe
 
 log_dbg, log_err, log_info = print, print, print
 from aimi_plugin.bot.type import Bot as BotType
+from aimi_plugin.bot.type import BotAskData
 
 
 class PoeAPI:
@@ -181,9 +182,8 @@ class Bot(BotType):
         return self.bot.init
 
     # when time call bot
-    def is_call(self, caller: BotType, ask_data: Any) -> bool:
-        question = caller.bot_get_question(ask_data)
-        return self.bot.is_call(question)
+    def is_call(self, caller: BotType, ask_data: BotAskData) -> bool:
+        return self.bot.is_call(ask_data.question)
 
     # get support model
     def get_models(self, caller: BotType) -> List[str]:
@@ -191,10 +191,9 @@ class Bot(BotType):
 
     # ask bot
     def ask(
-        self, caller: BotType, ask_data: Any, timeout: int = 60
+        self, caller: BotType, ask_data: BotAskData
     ) -> Generator[dict, None, None]:
-        question = caller.bot_get_question(ask_data)
-        yield from self.bot.ask(question, timeout)
+        yield from self.bot.ask(ask_data.question, ask_data.timeout)
 
     # exit bot
     def when_exit(self, caller: BotType):

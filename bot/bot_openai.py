@@ -3,6 +3,7 @@ from typing import Generator, List, Dict, Any
 from openai import OpenAI
 
 from aimi_plugin.bot.type import Bot as BotType
+from aimi_plugin.bot.type import BotAskData
 
 log_dbg, log_err, log_info = print, print, print
 
@@ -56,13 +57,40 @@ class OpenAIAPI:
     def get_models(self) -> List[str]:
         if not self.init:
             return []
-
+        
         return self.models
+
+    def make_link_think(
+            self,
+            question: str,
+            aimi_name: str = "None",
+            nickname: str = "",
+            preset: str = "",
+            history: str = "") -> str:
+
+        link_think = f"""
+设定: {{
+“{preset}”
+}}.
+
+请只关注最新消息,历史如下: {{
+{history}
+}}.
+
+请根据设定和最新对话历史和你的历史回答, 不用“{aimi_name}:”开头, 回答如下问题: {{
+{nickname}说: “{question}”
+}}.
+"""
+        return link_think
 
     def ask(
         self,
         question: str,
         model: str = "",
+        aimi_name: str = "",
+        nickname: str = "",
+        preset: str = "",
+        history: str = "",
         context_messages: List[Dict] = [],
         conversation_id: str = "",
         timeout: int = 10,
@@ -71,7 +99,8 @@ class OpenAIAPI:
         presence_penalty: float = 0,
         frequency_penalty: float = 0,
     ) -> Generator[dict, None, None]:
-        if model == "web":
+        if model == 'web':
+            link_think = self.make_link_think(question=question, aimi_name=aimi_name, nickname=nickname, preset=preset, history=history)
             yield from self.web_ask(question, conversation_id, timeout)
         else:
             yield from self.api_ask(
@@ -358,9 +387,8 @@ class Bot(BotType):
         return self.bot.init
 
     # when time call bot
-    def is_call(self, caller: BotType, ask_data: Any) -> bool:
-        question = caller.bot_get_question(ask_data)
-        return self.bot.is_call(question)
+    def is_call(self, caller: BotType, ask_data: BotAskData) -> bool:
+        return self.bot.is_call(ask_data.question)
 
     # get support model
     def get_models(self, caller: BotType) -> List[str]:
@@ -368,18 +396,18 @@ class Bot(BotType):
 
     # ask bot
     def ask(
-        self, caller: BotType, ask_data: Any, timeout: int = 60
+        self, caller: BotType, ask_data: BotAskData
     ) -> Generator[dict, None, None]:
-        model = caller.bot_get_model(ask_data)
-        question = caller.bot_get_question(ask_data)
-        messages = caller.bot_get_messages(ask_data)
-        conversation_id = caller.bot_get_conversation_id(ask_data)
         yield from self.bot.ask(
-            question=question,
-            model=model,
-            context_messages=messages,
-            conversation_id=conversation_id,
-            timeout=timeout,
+            question=ask_data.question,
+            model=ask_data.model,
+            nickname=ask_data.nickname,
+            aimi_name=ask_data.aimi_name,
+            preset=ask_data.preset,
+            history=ask_data.history,
+            context_messages=ask_data.messages,
+            conversation_id=ask_data.conversation_id,
+            timeout=ask_data.timeout,
         )
 
     # exit bot

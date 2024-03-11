@@ -1,6 +1,7 @@
 from typing import Any, Generator, List
 
 from aimi_plugin.bot.type import Bot as BotType
+from aimi_plugin.bot.type import BotAskData
 
 log_dbg, log_err, log_info = print, print, print
 
@@ -21,9 +22,9 @@ class Bot(BotType):
         return self.bot.init
 
     # when time call bot
-    def is_call(self, caller: BotType, ask_data) -> bool:
-        question = caller.bot_get_question(ask_data)
-        if trigger in question:
+    def is_call(self, caller: BotType, ask_data: BotAskData) -> bool:
+        question = ask_data.question
+        if f"#{self.type} " in question:
             return True
         return False
 
@@ -32,8 +33,8 @@ class Bot(BotType):
         return [self.type]
 
     # ask bot
-    def ask(self, caller: BotType, ask_data) -> Generator[dict, None, None]:
-        question = caller.bot_get_question(ask_data)
+    def ask(self, caller: BotType, ask_data: BotAskData) -> Generator[dict, None, None]:
+        question = ask_data.question
         yield caller.bot_set_response(code=1, message="ask")
         yield caller.bot_set_response(code=0, message="ask ok.")
         # if error, then: yield caller.bot_set_response(code=-1, message="err")

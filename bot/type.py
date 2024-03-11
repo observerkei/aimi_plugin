@@ -1,5 +1,22 @@
-from typing import Generator, List, Dict, Any, Tuple
+from typing import Generator, List, Dict, Any, Tuple, Optional, Union
+from pydantic import BaseModel, constr
 
+class BotType:
+    Bing: str = "bing"
+    Google: str = "google"
+    OpenAI: str = "openai"
+    Wolfram: str = "wolfram"
+
+class BotAskData(BaseModel):
+    question: Optional[str]
+    model: Optional[Union[str, None]] = None
+    messages: Optional[Union[List[Dict[str, str]], None]] = None
+    conversation_id: Optional[Union[str, None]] = ""
+    timeout: Optional[Union[int, None]] = 10
+    aimi_name: Optional[Union[str, None]] = "Aimi",
+    nickname: Optional[Union[str, None]] = "Master",
+    preset: Optional[Union[str, None]] = "",
+    history: Optional[Union[str, None]] = ""
 
 # call bot_ plugin example
 class Bot:
@@ -17,43 +34,22 @@ class Bot:
     def init(self) -> bool:
         pass
 
-    def is_call(self, caller: Any, req) -> bool:
+    def is_call(self, caller: Any, req: str) -> bool:
         pass
 
     def get_models(self, caller: Any) -> List[str]:
         pass
 
-    def ask(self, caller: Any, ask_data) -> Generator[dict, None, None]:
+    def ask(self, caller: Any, ask_data: BotAskData) -> Generator[dict, None, None]:
+        pass
+
+    def bot_ask(self, caller: Any, bot_type: str, ask_data: BotAskData) -> Generator[dict, None, None]:
         pass
 
     def when_exit(self, caller: Any):
         pass
 
     def when_init(self, caller: Any):
-        pass
-
-    def bot_pack_ask_data(
-        self,
-        question: str,
-        model: str = "",
-        messages: List = [],
-        conversation_id: str = "",
-    ):
-        pass
-
-    def bot_get_question(self, ask_data):
-        pass
-
-    def bot_get_model(self, ask_data):
-        pass
-
-    def bot_get_messages(self, ask_data):
-        pass
-
-    def bot_get_conversation_id(self, ask_data):
-        pass
-
-    def bot_get_timeout(self, ask_data):
         pass
 
     def bot_set_response(self, code: int, message: str) -> Any:

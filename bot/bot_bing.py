@@ -4,11 +4,11 @@ from EdgeGPT.EdgeGPT import ConversationStyle as EdgeConversationStyle
 from contextlib import suppress
 from typing import Generator, List, Any, Dict
 import time
-from concurrent.futures import ThreadPoolExecutor
 import random
 import json
 
 from aimi_plugin.bot.type import Bot as BotType
+from aimi_plugin.bot.type import BotAskData
 
 log_dbg, log_err, log_info = print, print, print
 
@@ -106,7 +106,7 @@ class BingAPI:
             self.max_messages = 0
 
             self.init = False
-            await self.__bot_create()
+            self.__bot_create()
         return False
 
     class ConversationStyle:
@@ -138,8 +138,19 @@ class BingAPI:
         self,
         question: str,
         conversation_style: str = None,
+        aimi_name: str = "None",
+        nickname: str = "",
+        preset: str = "",
         timeout: int = 360,
     ) -> Generator[dict, None, None]:
+        
+        if not preset.isspace():
+            question = self.make_link_think(
+                question=question,
+                aimi_name=aimi_name,
+                nickname=nickname,
+                preset=preset,
+            )
         yield from self.__fuck_async(
             self.web_ask(question, conversation_style, timeout)
         )
@@ -152,7 +163,7 @@ class BingAPI:
     ) -> Generator[dict, None, None]:
         answer = {"message": "", "code": 1}
 
-        if (not self.init) and (not await self.__bot_create()):
+        if (not self.init) and (not self.__bot_create()):
             log_err("fail to load bing bot")
             answer["code"] = -1
             yield answer
@@ -204,7 +215,7 @@ class BingAPI:
 
                         log_dbg(f"cur: {self.cur_messages} max: {self.max_messages}")
                         if self.cur_messages == self.max_messages:
-                            asyncio.run(self.__bot_create())
+                            self.__bot_create()
 
                     raw_text = ""
                     try:
@@ -269,7 +280,7 @@ class BingAPI:
                     time.sleep(5)
 
                 self.init = False
-                await self.__bot_create()
+                self.__bot_create()
 
             # request complate.
             if answer["code"] == 0:
@@ -278,15 +289,40 @@ class BingAPI:
         yield answer
 
     def __fuck_async(self, async_gen):
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+
         while True:
             try:
-                yield self.loop.run_until_complete(async_gen.__anext__())
+                yield loop.run_until_complete(async_gen.__anext__())
             except StopAsyncIteration:
                 log_dbg("stop: " + str(StopAsyncIteration))
                 break
             except Exception as e:
                 log_dbg("fail to get res " + str(e))
                 break
+
+
+    def make_link_think(
+            self,
+            question: str,
+            aimi_name: str = "None",
+            nickname: str = "",
+            preset: str = "",
+            history: str = "") -> str:
+        link_think = f"""
+故事主题如下: 故事中有两个人到了异世界里面开咖啡厅.
+故事情节如下: 其中主人公自称Master({nickname}), 他有一个助理, 名叫{aimi_name}, 他们两个在聊天.
+故事背景如下: {{
+{preset}
+{aimi_name}能问她的朋友 Bing 来尽力解答Master的问题.
+}}
+
+请不显示故事主题/情节/背景的分析过程, 以“{aimi_name}”的身份, 让聊天足够自然, 接下以下聊天: {{
+{nickname}说: '{question}'
+}}
+"""
+        return link_think
 
     def get_models(self) -> List[str]:
         if not self.init:
@@ -297,11 +333,7 @@ class BingAPI:
     def __init__(self, setting) -> None:
         self.__load_setting(setting)
 
-        asyncio.run(self.__bot_create())
-
-        self.loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(self.loop)
-        self.loop = asyncio.get_event_loop()
+        self.__bot_create()
 
         self.models = ["Microsoft New Bing"]
         [
@@ -310,14 +342,14 @@ class BingAPI:
             self.ConversationStyle.precise,
         ]
 
-    async def __bot_create(self):
+    def __bot_create(self):
         if self.init:
             log_dbg("bing arealy init")
             return
 
         try:
             cookies = json.loads(open(self.cookie_path, encoding="utf-8").read())
-            self.chatbot = await Chatbot().create(cookies=cookies)
+            self.chatbot = self.__fuck_async(Chatbot().create(cookies=cookies))
             self.init = True
             log_info(f"{self.type}: init done")
         except Exception as e:
@@ -394,9 +426,8 @@ class Bot(BotType):
         return self.bot.init
 
     # when time call bot
-    def is_call(self, caller: BotType, ask_data: Any) -> bool:
-        question = caller.bot_get_question(ask_data)
-        return self.bot.is_call(question)
+    def is_call(self, caller: BotType, ask_data: BotAskData) -> bool:
+        return self.bot.is_call(ask_data.question)
 
     # get support model
     def get_models(self, caller: BotType) -> List[str]:
@@ -404,11 +435,13 @@ class Bot(BotType):
 
     # ask bot
     def ask(
-        self, caller: BotType, ask_data: Any, timeout: int = 60
+        self, caller: BotType, ask_data: BotAskData
     ) -> Generator[dict, None, None]:
-        model = caller.bot_get_model(ask_data)
-        messages = caller.bot_get_messages(ask_data)
-        yield from self.bot.ask(model, messages, timeout)
+        yield from self.bot.ask(question=ask_data.question,
+                                aimi_name=ask_data.aimi_name,
+                                nickname=ask_data.nickname,
+                                preset=ask_data.preset,
+                                timeout=ask_data.timeout)
 
     # exit bot
     def when_exit(self, caller: BotType):

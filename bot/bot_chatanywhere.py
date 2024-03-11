@@ -1,9 +1,9 @@
 from typing import Generator, List, Any, Dict
 import time
 import openai
-import requests
 
 from aimi_plugin.bot.type import Bot as BotType
+from aimi_plugin.bot.type import BotAskData
 
 log_dbg, log_err, log_info = print, print, print
 
@@ -160,14 +160,6 @@ class ChatAnywhereAPI:
             self.api_base and len(self.api_base)
         ):
             try:
-                """
-                api_status = 'https://chimeragpt.adventblocks.cc/'
-                response = requests.get(api_status)
-                if 'Api works!' in response.text:
-                    log_info(f'load {self.type} bot done.')
-                else:
-                    raise Exception(f"fail to init {self.type}, res: {str(response.text)}")
-                """
                 openai.api_key = self.api_key
                 openai.api_base = self.api_base
 
@@ -258,9 +250,8 @@ class Bot(BotType):
         return self.bot.init
 
     # when time call bot
-    def is_call(self, caller: BotType, ask_data: Any) -> bool:
-        question = caller.bot_get_question(ask_data)
-        return self.bot.is_call(question)
+    def is_call(self, caller: BotType, ask_data: BotAskData) -> bool:
+        return self.bot.is_call(ask_data.question)
 
     # get support model
     def get_models(self, caller: BotType) -> List[str]:
@@ -268,11 +259,9 @@ class Bot(BotType):
 
     # ask bot
     def ask(
-        self, caller: BotType, ask_data: Any, timeout: int = 60
+        self, caller: BotType, ask_data: BotAskData
     ) -> Generator[dict, None, None]:
-        model = caller.bot_get_model(ask_data)
-        messages = caller.bot_get_messages(ask_data)
-        yield from self.bot.ask(model, messages, timeout)
+        yield from self.bot.ask(ask_data.model, ask_data.messages, ask_data.timeout)
 
     # exit bot
     def when_exit(self, caller: BotType):

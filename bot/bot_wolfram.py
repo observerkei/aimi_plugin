@@ -1,13 +1,11 @@
 import wolframalpha
-import time
 import re
 from typing import List, Any, Generator
-import json
 
-from aimi_plugin.bot.type import Bot as BotType
+from aimi_plugin.bot.type import Bot as BotBase
+from aimi_plugin.bot.type import BotAskData, BotType
 
 log_dbg, log_err, log_info = print, print, print
-
 
 
 class WolframAPI:
@@ -62,6 +60,32 @@ class WolframAPI:
             return []
 
         return [f"Stephen Wolfram {self.type}alpha"]
+
+
+    def make_link_think(
+            self,
+            question: str,
+            aimi_name: str = "None",
+            nickname: str = "",
+            preset: str = "",
+            history: str = "") -> str:
+        link_think = f"""
+需求:
+1. 使用 latex 显示内容比如:
+' $$ 
+x_1 
+$$ ' .
+
+2. 我需要你使用翻译功能, 帮我把 the wolfram response 的内容翻译成我的语言.
+3. 请忽略历史记录, 你现在是严谨的逻辑分析翻译结构.
+4. 你的品味很高,你会使内容更加美观,你会添加足够多的二次换行,并在不同层次追加换行,并按照自己经验让内容变得更加好看,答案要重点突出,并用latex显示.
+5. 不要试图解决这个问题，你只能显示 the wolfram response 里面的内容.
+
+the wolfram response: {{
+{question}
+}}
+"""
+        return link_think
 
     def get_sub_from_context(self, context, title):
         log_dbg(f"type: {str(type(context))}")
@@ -252,7 +276,7 @@ class WolframAPI:
 
 
 # call bot_ plugin
-class Bot(BotType):
+class Bot(BotBase):
     # This has to be globally unique
     type: str
     bot: WolframAPI
@@ -265,27 +289,32 @@ class Bot(BotType):
         return self.bot.init
 
     # when time call bot
-    def is_call(self, caller: BotType, ask_data: Any) -> bool:
-        question = caller.bot_get_question(ask_data)
-        return self.bot.is_call(question)
+    def is_call(self, caller: BotBase, ask_data: BotAskData) -> bool:
+        return self.bot.is_call(ask_data.question)
 
     # get support model
-    def get_models(self, caller: BotType) -> List[str]:
+    def get_models(self, caller: BotBase) -> List[str]:
         return self.bot.get_models()
 
     # ask bot
     def ask(
-        self, caller: BotType, ask_data: Any, timeout: int = 60
+        self, caller: BotBase, ask_data: BotAskData
     ) -> Generator[dict, None, None]:
-        question = caller.bot_get_question(ask_data)
-        yield from self.bot.ask(question, timeout)
+        response = ""
+        for res in self.bot.ask(ask_data.question, ask_data.timeout):
+            response = res['message']
+
+        # 格式化输出
+        link_think = self.bot.make_link_think(response)
+        new_ask_data = BotAskData(question=link_think)
+        yield from caller.bot_ask(caller, BotType.OpenAI, new_ask_data)
 
     # exit bot
-    def when_exit(self, caller: BotType):
+    def when_exit(self, caller: BotBase):
         pass
 
     # init bot
-    def when_init(self, caller: BotType):
+    def when_init(self, caller: BotBase):
         global log_info, log_dbg, log_err
         log_info = caller.bot_log_info
         log_dbg = caller.bot_log_dbg
