@@ -11,13 +11,14 @@ from aimi_plugin.bot.type import Bot as BotType
 
 log_dbg, log_err, log_info = print, print, print
 
+
 class GoogleAPI:
     type: str = "google"
     chatbot: Any
     cookie_1PSIDTS: str = ""
     cookie_1PSID: str = ""
     cookie_NID: str = ""
-    cookie_file: str = './run/google_gemini_cookie.json'
+    cookie_file: str = "./run/google_gemini_cookie.json"
     api_key: str = ""
     max_requestion: int = 1024
     max_repeat_times: int = 3
@@ -39,6 +40,8 @@ class GoogleAPI:
 
     @property
     def init(self) -> bool:
+        if self.init_gemini:
+            return True
         if self.init_api:
             return True
         if self.init_web:
@@ -54,7 +57,7 @@ class GoogleAPI:
         model: str = "",
         timeout: int = 5,
     ) -> Generator[dict, None, None]:
-        
+
         if not len(model) and len(self.models):
             if len(self.models_gemini):
                 model = self.models_gemini[0]
@@ -67,16 +70,13 @@ class GoogleAPI:
             yield from self.api_ask(question, model, timeout)
         else:
             yield from self.__fuck_async(self.web_ask(question, timeout))
-    
+
     def ask_gemini(
-        self,
-        question: str,
-        model: str,
-        timeout: int = 5
+        self, question: str, model: str, timeout: int = 5
     ) -> Generator[dict, None, None]:
         answer = {"message": "", "code": 1}
 
-        if (not self.init_gemini) and (self.__bot_create()):
+        if (not self.init_gemini) and self.__fuck_async(self.__bot_create()):
             log_err("fail to create gemini bot")
             answer["code"] = -1
             return answer
@@ -86,16 +86,14 @@ class GoogleAPI:
         while req_cnt < self.max_repeat_times:
             req_cnt += 1
             answer["code"] = 1
-            
+
             try:
                 model = self.gemini.GenerativeModel(model)
 
-                message=''
-                for chunk in model.generate_content(
-                    question, stream=True
-                ):
+                message = ""
+                for chunk in model.generate_content(question, stream=True):
                     message += chunk.text
-                    answer['message'] = message
+                    answer["message"] = message
                     yield answer
 
                 answer["code"] = 0
@@ -128,7 +126,7 @@ class GoogleAPI:
     ) -> Generator[dict, None, None]:
         answer = {"message": "", "code": 1}
 
-        if (not self.init_api) and (self.__bot_create()):
+        if (not self.init_api) and self.__fuck_async(self.__bot_create()):
             log_err("fail to create google api bot")
             answer["code"] = -1
             return answer
@@ -258,6 +256,7 @@ To use the calculator wrap an equation in <calc> tags like this:
         if len(self.api_key) and not self.init_gemini:
             try:
                 import google.generativeai as genai
+
                 self.gemini = genai
 
                 self.gemini.configure(api_key=self.api_key)
@@ -269,18 +268,18 @@ To use the calculator wrap an equation in <calc> tags like this:
                 self.models_gemini = [m.name for m in models]
                 self.models.extend(self.models_gemini)
 
-                log_dbg(f'avalible model: {self.models_gemini}')
+                log_dbg(f"avalible model: {self.models_gemini}")
                 self.init_gemini = True
                 log_dbg("google gemini init done")
 
             except Exception as e:
                 self.init_gemini = False
                 log_err(f"fail to create gemini google: {e}")
-                
 
         if len(self.api_key) and not self.init_api:
             try:
                 import google.generativeai as palm
+
                 self.chatbot = palm
 
                 self.chatbot.configure(api_key=self.api_key)
@@ -292,13 +291,12 @@ To use the calculator wrap an equation in <calc> tags like this:
                 self.models_api = [m.name for m in models]
                 self.models.extend(self.models_api)
 
-                log_dbg(f'avalible model: {self.models_api}')
+                log_dbg(f"avalible model: {self.models_api}")
                 self.init_api = True
                 log_dbg("google api init done")
             except Exception as e:
                 self.init_api = False
                 log_err(f"fail to create api google: {e}")
-                
 
         if (
             False
