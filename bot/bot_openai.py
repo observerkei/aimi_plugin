@@ -2,7 +2,7 @@ import time
 from typing import Generator, List, Dict, Any
 from openai import OpenAI
 
-from aimi_plugin.bot.type import Bot as BotType
+from aimi_plugin.bot.type import Bot as BotBase
 from aimi_plugin.bot.type import BotAskData
 
 log_dbg, log_err, log_info = print, print, print
@@ -87,6 +87,7 @@ class OpenAIAPI:
         self,
         question: str,
         model: str = "",
+        api_key: str = "",
         aimi_name: str = "",
         nickname: str = "",
         preset: str = "",
@@ -101,11 +102,12 @@ class OpenAIAPI:
     ) -> Generator[dict, None, None]:
         if model == 'web':
             link_think = self.make_link_think(question=question, aimi_name=aimi_name, nickname=nickname, preset=preset, history=history)
-            yield from self.web_ask(question, conversation_id, timeout)
+            yield from self.web_ask(link_think, conversation_id, timeout)
         else:
             yield from self.api_ask(
                 question=question,
                 model=model,
+                api_key=api_key,
                 messages=context_messages,
                 timeout=timeout,
                 temperature=temperature,
@@ -183,6 +185,7 @@ class OpenAIAPI:
         self,
         question: str,
         model: str = "",
+        api_key: str = "",
         messages: List[Dict] = [],
         timeout: int = 10,
         temperature: float = 1,
@@ -261,10 +264,10 @@ class OpenAIAPI:
 
     def __init__(self, setting: dict) -> None:
         self.__load_setting(setting)
-        if self.__create_bot():
+        if self.__init_bot():
             log_info(f"{self.type} init done.")
 
-    def __create_bot(self) -> bool:
+    def __init_bot(self) -> bool:
         access_token = self.access_token
         if access_token and len(access_token):
             from revChatGPT.V1 import Chatbot
@@ -374,7 +377,7 @@ class OpenAIAPI:
 
 
 # call bot_ plugin
-class Bot(BotType):
+class Bot(BotBase):
     # This has to be globally unique
     type: str
     bot: OpenAIAPI
@@ -387,20 +390,21 @@ class Bot(BotType):
         return self.bot.init
 
     # when time call bot
-    def is_call(self, caller: BotType, ask_data: BotAskData) -> bool:
+    def is_call(self, caller: BotBase, ask_data: BotAskData) -> bool:
         return self.bot.is_call(ask_data.question)
 
     # get support model
-    def get_models(self, caller: BotType) -> List[str]:
+    def get_models(self, caller: BotBase) -> List[str]:
         return self.bot.get_models()
 
     # ask bot
     def ask(
-        self, caller: BotType, ask_data: BotAskData
+        self, caller: BotBase, ask_data: BotAskData
     ) -> Generator[dict, None, None]:
         yield from self.bot.ask(
             question=ask_data.question,
             model=ask_data.model,
+            api_key=ask_data.api_key,
             nickname=ask_data.nickname,
             aimi_name=ask_data.aimi_name,
             preset=ask_data.preset,
@@ -411,15 +415,15 @@ class Bot(BotType):
         )
 
     # exit bot
-    def when_exit(self, caller: BotType):
+    def when_exit(self, caller: BotBase):
         pass
 
     # init bot
-    def when_init(self, caller: BotType):
+    def when_init(self, caller: BotBase, setting: dict = None):
         global log_info, log_dbg, log_err
         log_info = caller.bot_log_info
         log_dbg = caller.bot_log_dbg
         log_err = caller.bot_log_err
 
-        self.setting = caller.bot_load_setting(self.type)
+        self.setting = setting
         self.bot = OpenAIAPI(self.setting)

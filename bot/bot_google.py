@@ -1,7 +1,7 @@
 import time
 from typing import Generator, List, Any
 
-from aimi_plugin.bot.type import Bot as BotType
+from aimi_plugin.bot.type import Bot as BotBase
 from aimi_plugin.bot.type import BotAskData
 
 log_dbg, log_err, log_info = print, print, print
@@ -416,7 +416,7 @@ To use the calculator wrap an equation in <calc> tags like this:
 
 
 # call bot_ plugin
-class Bot(BotType):
+class Bot(BotBase):
     # This has to be globally unique
     type: str
     bot: GoogleAPI
@@ -429,15 +429,15 @@ class Bot(BotType):
         return self.bot.init
 
     # when time call bot
-    def is_call(self, caller: BotType, ask_data: BotAskData) -> bool:
+    def is_call(self, caller: BotBase, ask_data: BotAskData) -> bool:
         return self.bot.is_call(ask_data.question)
 
     # get support model
-    def get_models(self, caller: BotType) -> List[str]:
+    def get_models(self, caller: BotBase) -> List[str]:
         return self.bot.get_models()
 
     # ask bot
-    def ask(self, caller: BotType, ask_data: BotAskData) -> Generator[dict, None, None]:
+    def ask(self, caller: BotBase, ask_data: BotAskData) -> Generator[dict, None, None]:
         yield from self.bot.ask(
             question=ask_data.question,
             model=ask_data.model,
@@ -448,15 +448,15 @@ class Bot(BotType):
         )
 
     # exit bot
-    def when_exit(self, caller: BotType):
+    def when_exit(self, caller: BotBase):
         pass
 
     # init bot
-    def when_init(self, caller: BotType):
+    def when_init(self, caller: BotBase, setting: dict = None):
         global log_info, log_dbg, log_err
         log_info = caller.bot_log_info
         log_dbg = caller.bot_log_dbg
         log_err = caller.bot_log_err
 
-        self.setting = caller.bot_load_setting(self.type)
+        self.setting = setting
         self.bot = GoogleAPI(self.setting)

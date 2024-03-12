@@ -9,8 +9,9 @@ class BotType:
 
 class BotAskData(BaseModel):
     question: Optional[str]
-    model: Optional[Union[str, None]] = None
-    messages: Optional[Union[List[Dict[str, str]], None]] = None
+    model: Optional[Union[str, None]] = ""
+    api_key:  Optional[Union[str, None]] = ""
+    messages: Optional[Union[List[Dict[str, str]], None]] = []
     conversation_id: Optional[Union[str, None]] = ""
     timeout: Optional[Union[int, None]] = 10
     aimi_name: Optional[Union[str, None]] = "Aimi",
@@ -49,7 +50,7 @@ class Bot:
     def when_exit(self, caller: Any):
         pass
 
-    def when_init(self, caller: Any):
+    def when_init(self, caller: Any, setting: dict = None):
         pass
 
     def bot_set_response(self, code: int, message: str) -> Any:
