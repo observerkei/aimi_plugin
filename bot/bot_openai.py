@@ -57,16 +57,17 @@ class OpenAIAPI:
     def get_models(self) -> List[str]:
         if not self.init:
             return []
-        
+
         return self.models
 
     def make_link_think(
-            self,
-            question: str,
-            aimi_name: str = "None",
-            nickname: str = "",
-            preset: str = "",
-            history: str = "") -> str:
+        self,
+        question: str,
+        aimi_name: str = "Aimi",
+        nickname: str = "Master",
+        preset: str = "",
+        history: str = "",
+    ) -> str:
 
         link_think = f"""
 设定: {{
@@ -100,8 +101,14 @@ class OpenAIAPI:
         presence_penalty: float = 0,
         frequency_penalty: float = 0,
     ) -> Generator[dict, None, None]:
-        if model == 'web':
-            link_think = self.make_link_think(question=question, aimi_name=aimi_name, nickname=nickname, preset=preset, history=history)
+        if model == "web":
+            link_think = self.make_link_think(
+                question=question,
+                aimi_name=aimi_name,
+                nickname=nickname,
+                preset=preset,
+                history=history,
+            )
             yield from self.web_ask(link_think, conversation_id, timeout)
         else:
             yield from self.api_ask(
@@ -205,6 +212,8 @@ class OpenAIAPI:
         if not model or not len(model) or (model not in self.chat_completions_models):
             model = self.__get_bot_model(question)
         log_dbg(f"use model: {model}")
+        if not len(messages) and question:
+            messages = [{"role": "user", "content": question}]
         # log_dbg(f"msg: {str(messages)}")
 
         while req_cnt < self.max_repeat_times:
@@ -398,9 +407,7 @@ class Bot(BotBase):
         return self.bot.get_models()
 
     # ask bot
-    def ask(
-        self, caller: BotBase, ask_data: BotAskData
-    ) -> Generator[dict, None, None]:
+    def ask(self, caller: BotBase, ask_data: BotAskData) -> Generator[dict, None, None]:
         yield from self.bot.ask(
             question=ask_data.question,
             model=ask_data.model,

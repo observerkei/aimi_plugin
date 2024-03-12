@@ -3,7 +3,7 @@ import re
 from typing import List, Any, Generator
 
 from aimi_plugin.bot.type import Bot as BotBase
-from aimi_plugin.bot.type import BotAskData, BotBase
+from aimi_plugin.bot.type import BotAskData, BotType
 
 log_dbg, log_err, log_info = print, print, print
 
@@ -307,7 +307,7 @@ class Bot(BotBase):
         # 格式化输出
         link_think = self.bot.make_link_think(response)
         new_ask_data = BotAskData(question=link_think)
-        yield from caller.bot_ask(caller, BotBase.OpenAI, new_ask_data)
+        yield from caller.bot_ask(caller, BotType.OpenAI, new_ask_data)
 
     # exit bot
     def when_exit(self, caller: BotBase):

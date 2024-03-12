@@ -144,7 +144,7 @@ class BingAPI:
         timeout: int = 360,
     ) -> Generator[dict, None, None]:
         
-        if not preset.isspace():
+        if preset and not preset.isspace():
             question = self.make_link_think(
                 question=question,
                 aimi_name=aimi_name,

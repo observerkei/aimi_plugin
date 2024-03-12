@@ -6,6 +6,7 @@ class BotType:
     Google: str = "google"
     OpenAI: str = "openai"
     Wolfram: str = "wolfram"
+    Task: str = "task"
 
 class BotAskData(BaseModel):
     question: Optional[str]
@@ -13,10 +14,10 @@ class BotAskData(BaseModel):
     api_key:  Optional[Union[str, None]] = ""
     messages: Optional[Union[List[Dict[str, str]], None]] = []
     conversation_id: Optional[Union[str, None]] = ""
-    timeout: Optional[Union[int, None]] = 10
-    aimi_name: Optional[Union[str, None]] = "Aimi",
-    nickname: Optional[Union[str, None]] = "Master",
-    preset: Optional[Union[str, None]] = "",
+    timeout: Optional[Union[int, None]] = 0
+    aimi_name: Optional[Union[str, None]] = ""
+    nickname: Optional[Union[str, None]] = ""
+    preset: Optional[Union[str, None]] = ""
     history: Optional[Union[str, None]] = ""
 
 # call bot_ plugin example
