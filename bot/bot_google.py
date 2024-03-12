@@ -62,7 +62,9 @@ Please focus only on the latest news. History follows: {{
 {history}
 }}
 
-Please answer the following question based on the preset, 
+You should extract my conversation directly from the structure here and answer it directly.
+
+Please answer the following question based on the preset,
 the latest conversation history, and your previous answers.
 and without starting with '{aimi_name}:'
 You should extract my question directly from the structure here and answer it directly: {{
@@ -75,7 +77,7 @@ You should extract my question directly from the structure here and answer it di
         self,
         question: str,
         model: str = "",
-        aimi_name: str = "A",
+        aimi_name: str = "Aimi",
         nickname: str = "K",
         preset: str = "",
         history: str = "",
@@ -443,6 +445,7 @@ class Bot(BotBase):
             model=ask_data.model,
             timeout=ask_data.timeout,
             nickname=ask_data.nickname,
+            aimi_name=ask_data.aimi_name,
             preset=ask_data.preset,
             history=ask_data.history,
         )
