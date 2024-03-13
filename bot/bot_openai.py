@@ -38,7 +38,6 @@ class OpenAIAPI:
         "gpt-4-32k-0314",
         "gpt-4-32k-0613",
     ]
-    init: bool = False
     init_web: bool = False
     init_api: bool = False
 
@@ -46,6 +45,12 @@ class OpenAIAPI:
         SYSTEM = "system"
         USER = "user"
         ASSISTANT = "assistant"
+
+    @property
+    def init(self):
+        if self.init_web or self.init_api:
+            return True
+        return False
 
     def is_call(self, question) -> bool:
         for call in self.trigger:
@@ -88,7 +93,6 @@ class OpenAIAPI:
         self,
         question: str,
         model: str = "",
-        api_key: str = "",
         aimi_name: str = "",
         nickname: str = "",
         preset: str = "",
@@ -114,7 +118,6 @@ class OpenAIAPI:
             yield from self.api_ask(
                 question=question,
                 model=model,
-                api_key=api_key,
                 messages=context_messages,
                 timeout=timeout,
                 temperature=temperature,
@@ -315,30 +318,6 @@ class OpenAIAPI:
             except Exception as e:
                 log_err(f"fail to get model {self.type} : {e}")
 
-        if not self.init_api:
-            try:
-                hello = "状态正常?请回答‘是’或‘否’."
-                bot_model = self.__get_bot_model(hello)
-                for event in self.openai.chat.completions.create(
-                    model=bot_model,
-                    messages=[{"role": "user", "content": hello}],
-                    stream=True,
-                ):
-                    print(event)
-                    print(str(type(event)))
-                    if event.choices[0].finish_reason == "stop":
-                        # log_dbg(f'recv complate: {completion}')
-                        break
-                    log_dbg(f"{str(event)}")
-
-                self.models.append(bot_model)
-                self.init = True
-            except Exception as e:
-                log_err(f"fail to ask {self.type}: {e}")
-
-        if self.init_web or self.init_api:
-            self.init = True
-
         return self.init
 
     def __load_setting(self, setting: dict):
@@ -411,7 +390,6 @@ class Bot(BotBase):
         yield from self.bot.ask(
             question=ask_data.question,
             model=ask_data.model,
-            api_key=ask_data.api_key,
             nickname=ask_data.nickname,
             aimi_name=ask_data.aimi_name,
             preset=ask_data.preset,

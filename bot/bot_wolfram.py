@@ -19,12 +19,12 @@ class WolframAPI:
     def __init__(self, setting):
         self.__load_setting(setting)
         if not self.app_id or not (len(self.app_id)):
-            log_info("no wolfram app id")
+            log_dbg("no wolfram app id")
             return
         try:
             self.client = wolframalpha.Client(self.app_id)
             self.init = True
-            log_info(f"{self.type} init done")
+            log_dbg(f"{self.type} init done")
         except Exception as e:
             log_err(f"fail to init wolfram: {e}")
 
