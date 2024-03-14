@@ -1,6 +1,5 @@
 from typing import Generator, List, Any, Dict
 import time
-import openai
 
 from aimi_plugin.bot.type import Bot as BotBase
 from aimi_plugin.bot.type import BotAskData
@@ -19,6 +18,7 @@ class ChatAnywhereAPI:
     api_base: str = ""
     models: Dict[str, Dict] = {}
     init: bool = False
+    chatbot: Any
 
     def is_call(self, question: str) -> bool:
         for default in self.models["default"]["trigger"]:
@@ -115,7 +115,7 @@ class ChatAnywhereAPI:
                 res = None
 
                 completion = {"role": "", "content": ""}
-                for event in openai.ChatCompletion.create(
+                for event in self.chatbot.ChatCompletion.create(
                     model=bot_model,
                     messages=messages,
                     stream=True,
@@ -160,10 +160,15 @@ class ChatAnywhereAPI:
             self.api_base and len(self.api_base)
         ):
             try:
-                openai.api_key = self.api_key
-                openai.api_base = self.api_base
+                from openai import OpenAI
 
-                models = openai.Model.list()
+                OpenAI.api_base = self.api_base
+                OpenAI.api_key = self.api_key
+                self.chatbot = OpenAI(
+                    api_key=self.api_ask
+                )
+
+                models = OpenAI.Model.list()
                 for model in models["data"]:
                     log_dbg(f"avalible model: {str(model['id'])}")
 

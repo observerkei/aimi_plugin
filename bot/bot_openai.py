@@ -1,6 +1,5 @@
 import time
 from typing import Generator, List, Dict, Any
-from openai import OpenAI
 
 from aimi_plugin.bot.type import Bot as BotBase
 from aimi_plugin.bot.type import BotAskData
@@ -297,14 +296,20 @@ class OpenAIAPI:
             self.init_web = True
             self.models.append("web")
 
-        api_base = self.api_base
-        if api_base and len(api_base):
-            OpenAI.api_base = api_base
-            log_dbg(f"use openai base: {api_base}")
-
         api_key = self.api_key
         if api_key and len(api_key):
             try:
+                import os
+                from openai import OpenAI
+
+                # 因为OpenAI 内部加载逻辑导致, 需要配置环境变量, 否则退出的时候, 容易导致抛出 缺失KEY的异常.
+                os.environ["OPENAI_API_KEY"] = api_key
+
+                api_base = self.api_base
+                if api_base and len(api_base):
+                    OpenAI.api_base = api_base
+                    log_dbg(f"use openai base: {api_base}")
+
                 self.openai = OpenAI(
                     api_key=api_key,
                 )
