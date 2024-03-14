@@ -41,7 +41,7 @@ class Bot(BotBase):
 
     # exit bot
     def when_exit(self, caller: BotBase):
-        log_info("exit")
+        log_dbg("exit")
 
     # init bot
     def when_init(self, caller: BotBase, setting: dict = None):
@@ -50,5 +50,5 @@ class Bot(BotBase):
         log_dbg = caller.bot_log_dbg
         log_err = caller.bot_log_err
 
-        log_info("init")
+        log_dbg("init")
         self.setting = setting

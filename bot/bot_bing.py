@@ -267,7 +267,6 @@ class BingAPI:
 
             except Exception as e:
                 log_err("fail to ask: " + str(e))
-                log_info("server fail")
 
                 answer["message"] = str(e)
                 answer["code"] = -1
@@ -351,7 +350,7 @@ class BingAPI:
             cookies = json.loads(open(self.cookie_path, encoding="utf-8").read())
             self.chatbot = self.__fuck_async(Chatbot().create(cookies=cookies))
             self.init = True
-            log_info(f"{self.type}: init done")
+            log_dbg(f"{self.type}: init done")
         except Exception as e:
             log_err("fail to create bing bot: " + str(e))
             self.init = False

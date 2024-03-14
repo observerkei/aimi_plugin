@@ -90,9 +90,9 @@ class PoeAPI:
 
             except Exception as e:
                 log_err("fail to ask: " + str(e))
-                log_info("server fail, sleep 15")
+                log_dbg("server fail, sleep 15")
                 time.sleep(15)
-                log_info(f"try recreate {self.type} bot")
+                log_dbg(f"try recreate {self.type} bot")
                 self.__create_bot()
 
                 answer["message"] = str(e)
@@ -109,7 +109,7 @@ class PoeAPI:
                 new_bot = poe.Client(self.cookie_key)
                 self.chatbot = new_bot
                 self.init = True
-                log_info(f"load {self.type} bot: " + str(self.chatbot.bot_names))
+                log_dbg(f"load {self.type} bot: " + str(self.chatbot.bot_names))
             except Exception as e:
                 log_err(f"fail to init {self.type} bot: " + str(e))
                 self.init = False

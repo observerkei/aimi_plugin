@@ -142,9 +142,9 @@ class ChatAnywhereAPI:
 
             except Exception as e:
                 log_err("fail to ask: " + str(e))
-                log_info("server fail, sleep 15")
+                log_dbg("server fail, sleep 15")
                 time.sleep(15)
-                log_info(f"try recreate {self.type} bot")
+                log_dbg(f"try recreate {self.type} bot")
                 self.__create_bot()
 
                 answer["message"] = str(e)

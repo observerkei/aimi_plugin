@@ -170,7 +170,7 @@ class OpenAIAPI:
 
             except Exception as e:
                 log_err("fail to ask: " + str(e))
-                log_info("server fail")
+                log_dbg(f"server failed.")
 
                 answer["message"] = str(e)
                 answer["code"] = -1
@@ -253,7 +253,7 @@ class OpenAIAPI:
 
             except Exception as e:
                 log_err("fail to ask: " + str(e))
-                log_info("server fail")
+                log_dbg(f"server failed.")
 
                 answer["message"] = str(e)
                 answer["code"] = -1
@@ -277,7 +277,7 @@ class OpenAIAPI:
     def __init__(self, setting: dict) -> None:
         self.__load_setting(setting)
         if self.__init_bot():
-            log_info(f"{self.type} init done.")
+            log_dbg(f"{self.type} init done.")
 
     def __init_bot(self) -> bool:
         access_token = self.access_token
@@ -292,7 +292,7 @@ class OpenAIAPI:
             fackopen_url = self.fackopen_url
             if fackopen_url and len(fackopen_url):
                 self.chatbot.BASE_URL = fackopen_url
-                log_info("use fackopen_url: " + str(fackopen_url))
+                log_dbg("use fackopen_url: " + str(fackopen_url))
 
             self.init_web = True
             self.models.append("web")

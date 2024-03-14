@@ -171,7 +171,7 @@ Question: {{
 
             except Exception as e:
                 log_err("fail to ask: " + str(e))
-                log_info("server fail, maybe need check api_kei")
+                log_dbg("server fail, maybe need check api_kei")
 
                 answer["message"] = str(e)
                 answer["code"] = -1
@@ -180,7 +180,7 @@ Question: {{
                     log_dbg("sleep 5...")
                     time.sleep(5)
 
-                log_info("reload bot")
+                log_dbg("reload bot")
                 self.init_gemini = False
                 self.__bot_create()
 
@@ -254,7 +254,7 @@ To use the calculator wrap an equation in <calc> tags like this:
 
             except Exception as e:
                 log_err("fail to ask: " + str(e))
-                log_info("server fail, maybe need check api_kei")
+                log_dbg("server fail, maybe need check api_kei")
 
                 answer["message"] = str(e)
                 answer["code"] = -1
@@ -263,7 +263,7 @@ To use the calculator wrap an equation in <calc> tags like this:
                     log_dbg("sleep 5...")
                     time.sleep(5)
 
-                log_info("reload bot")
+                log_dbg("reload bot")
                 self.init_api = False
                 self.__bot_create()
 
@@ -303,7 +303,7 @@ To use the calculator wrap an equation in <calc> tags like this:
 
             except Exception as e:
                 log_err("fail to ask: " + str(e))
-                log_info("server fail, maybe need check cookie")
+                log_dbg("server fail, maybe need check cookie")
 
                 answer["message"] = str(e)
                 answer["code"] = -1
@@ -313,7 +313,7 @@ To use the calculator wrap an equation in <calc> tags like this:
                     log_dbg(f"sleep 5s...")
                     time.sleep(5)
 
-                log_info("reload bing")
+                log_dbg("reload bing")
                 self.init_web = False
                 self.__bot_create()
 
