@@ -25,6 +25,7 @@ class GoogleAPI:
     models: List[str] = []
     models_api: List[str] = []
     models_gemini: List[str] = []
+    default_model: str = ''
 
     def is_call(self, question) -> bool:
         for call in self.trigger:
@@ -87,9 +88,10 @@ Question: {{
     ) -> Generator[dict, None, None]:
 
         if model not in self.models and len(self.models):
-            if len(self.models_gemini):
-                model = self.models_gemini[0]
-            else:
+            # 未设置模型或者模型不存在, 使用默认模型
+            model = self.default_model
+            if model not in self.models:
+                # 默认模型不支持, 任意选择一个模型
                 model = self.models[0]
 
         if preset and not preset.isspace():
@@ -417,7 +419,11 @@ To use the calculator wrap an equation in <calc> tags like this:
         except Exception as e:
             log_err("fail to load google config: " + str(e))
             self.trigger = ["@google", "#google"]
-
+        try:
+            self.default_model = setting['default_model']
+        except Exception as e:
+            log_dbg("fail to load google default model. ")
+            self.default_model = ''
 
 # call bot_ plugin
 class Bot(BotBase):
