@@ -303,7 +303,7 @@ class OpenAIAPI:
                 from openai import OpenAI
 
                 # 因为OpenAI 内部加载逻辑导致, 需要配置环境变量, 否则退出的时候, 容易导致抛出 缺失KEY的异常.
-                os.environ["OPENAI_API_KEY"] = api_key
+                os.environ["OPENAI_API_KEY"] = "sk-no-key-required"
 
                 api_base = self.api_base
                 if api_base and len(api_base):

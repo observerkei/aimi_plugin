@@ -7,6 +7,7 @@ class BotType:
     OpenAI: str = "openai"
     Wolfram: str = "wolfram"
     Task: str = "task"
+    LLaMA: str = 'llama'
 
 class BotAskData(BaseModel):
     question: Optional[str]
