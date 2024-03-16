@@ -113,6 +113,8 @@ class LLaMA:
 
                     res = answer["message"]
 
+                if not len(res):
+                    raise Exception(f"server no reply.")
                 log_dbg(f"res: {str(res)}")
 
                 answer["code"] = 0
