@@ -105,14 +105,13 @@ class LLaMA:
                     messages=messages,
                     stream=True,
                 ):
-                    log_dbg(f'recv event: {str(event)}')
                     if event.choices[0].finish_reason == "stop":
                         break
 
                     answer["message"] += event.choices[0].delta.content
                     yield answer
 
-                    res = event
+                    res = answer["message"]
 
                 log_dbg(f"res: {str(res)}")
 
