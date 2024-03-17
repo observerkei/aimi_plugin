@@ -36,22 +36,22 @@ class Bot:
     def init(self) -> bool:
         pass
 
-    def is_call(self, caller: Any, req: str) -> bool:
+    def is_call(self, caller: 'Bot', req: str) -> bool:
         pass
 
-    def get_models(self, caller: Any) -> List[str]:
+    def get_models(self, caller: 'Bot') -> List[str]:
         pass
 
-    def ask(self, caller: Any, ask_data: BotAskData) -> Generator[dict, None, None]:
+    def ask(self, caller: 'Bot', ask_data: BotAskData) -> Generator[dict, None, None]:
         pass
 
-    def bot_ask(self, caller: Any, bot_type: str, ask_data: BotAskData) -> Generator[dict, None, None]:
+    def bot_ask(self, caller: 'Bot', bot_type: str, ask_data: BotAskData) -> Generator[dict, None, None]:
         pass
 
-    def when_exit(self, caller: Any):
+    def when_exit(self, caller: 'Bot'):
         pass
 
-    def when_init(self, caller: Any, setting: dict = None):
+    def when_init(self, caller: 'Bot', setting: dict = None):
         pass
 
     def bot_set_response(self, code: int, message: str) -> Any:
