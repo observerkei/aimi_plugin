@@ -17,7 +17,8 @@ class LLaMA:
     api_base: str
     trigger: List[str] = []
     init: bool = False
-    models: List[str] = ['alpaca-2-7b-16k']
+    models: List[str] = []
+    model_files: Dict[str, str] = {}
 
     def __init__(self, setting: dict) -> None:
         self.__load_setting(setting)
@@ -72,8 +73,10 @@ class LLaMA:
             messages=ask_data.messages,
         )
     
-    def __get_bot_model(self, question):
-        return self.models[0]
+    def __get_bot_model(self, question, model):
+        if model and model in self.models:
+            return self.model_files[model]
+        return self.model_files[0]
 
     def api_ask(
         self,
@@ -84,8 +87,7 @@ class LLaMA:
         answer = {"message": "", "code": 1}
 
         req_cnt = 0
-        if not model or not len(model):
-            model = self.__get_bot_model(question)
+        model = self.__get_bot_model(question, model)
        
         log_dbg(f"use model: {model}")
         if not len(messages) and question:
@@ -150,7 +152,22 @@ class LLaMA:
                     api_key=api_key,
                     base_url=self.api_base,
                 )
-                self.init = True
+
+                models = self.chatbot.models.list()  # (model_type="chat")
+                for model in models:
+                    show_model = model.id
+                    if '/' in show_model:
+                        show_model = show_model.split('/')[-1]
+                    if '.' in show_model:
+                        show_model = show_model.split('.')[0]
+                    self.model_files[show_model] = model.id
+                    self.models.append(show_model)
+                log_dbg(f"avalible model: {self.models}")
+
+                if self.models and len(self.models):
+                    self.init = True
+                else:
+                    log_dbg(f"no avalible model.")
 
             except Exception as e:
                 log_err(f"fail to get model {self.type} : {e}")
