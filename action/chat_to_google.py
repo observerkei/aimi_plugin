@@ -7,7 +7,9 @@ s_action = ActionToolItem(
     call="",
     # 当前 action 的描述
     # 说明这个action应该怎么使用
-    description="进行google搜索. 通过搜索可以获得最新的信息, 搜索得到的url也能打开后进行学习, 学习之后把方法保存下来的话, 就能提升能力. ",
+    description="进行google搜索. 通过搜索可以获得最新的信息, "
+    f"搜索得到的url需要打开查看, 打开后进行学习总结, "
+    f"学习之后把方法保存下来的话, 就能提升能力. ",
     # 调用接口的时候填写的参数说明
     request={
         "search": "要搜索的内容",

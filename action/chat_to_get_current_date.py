@@ -4,7 +4,7 @@ from aimi_plugin.action.type import ActionToolItem
 s_action = ActionToolItem(
     call="",
     description="获取当前日期",
-    request="{}",
+    request=None,
     execute="system",
 )
 
