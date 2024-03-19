@@ -153,7 +153,7 @@ class LLaMA:
                     base_url=self.api_base,
                 )
 
-                models = self.chatbot.models.list()  # (model_type="chat")
+                models = self.chatbot.models.list(timeout=1)
                 for model in models:
                     show_model = model.id
                     if '/' in show_model:
