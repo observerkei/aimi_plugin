@@ -37,12 +37,28 @@ def chat_from(request: dict = None):
     # 删除js代码
     for tag in soup.find_all("script"):
         tag.decompose()
+        
+    # 删除style样式代码
+    for tag in soup.find_all("style"):
+        tag.decompose()
 
     # 返回所有文本
     text = ""
+    first = True
+    limit = 2048
     for tag in soup.find_all():
         if tag.string:
+            if first and len(tag.string):
+                text += "以下是打开的链接内容, 请帮我进行总结: {\n"
+                first = False
             text += tag.string
+            if len(text) > 2048:
+                text += f'\n... ( 因为内容太长(>{limit}), 剩余部分已经省略. 如果没有想要的内容请尝试其他url链接. )\n'
+                break
+    
+
+    if len(text):
+        text += "\n\n}. \n请将结果总结给我. "
     
     if not len(text):
         text = 'error: 这个 url 无正常解析, 请替换其他 url 再重新尝试. '
