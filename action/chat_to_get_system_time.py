@@ -7,7 +7,7 @@ s_action = ActionToolItem(
     call="",
     # 当前 action 的描述
     # 说明这个action应该怎么使用
-    description="获取当前系统时间: 时间是准确的.",
+    description="获取当前系统时间和日期: 日期和时间是准确的.",
     # 调用接口的时候填写的参数说明
     request=None,
     # 这里指明执行类型
