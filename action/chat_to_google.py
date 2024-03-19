@@ -32,12 +32,12 @@ def chat_from(request: dict = None):
 
     query = request['search']
     num_results = 3
-    if 'num_results' in request:
+    if 'num_results' in request and request['num_results']:
         num = int(request['num_results'])
         if num > 0:
             num_results = num
     lang = 'zh'
-    if 'lang' in request:
+    if 'lang' in request and request['lang']:
         l = request['lang']
         if isinstance(l, str):
             lang = l
