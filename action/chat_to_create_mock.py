@@ -38,7 +38,7 @@ def chat_from(request: dict = None):
     request = request['mock']
 
     def show_name(name):
-        return f'[{name}] 生成 {name} . 请询问是否需要添加新增角色的全部定义保存到note中, 以及是否新增对象模拟. '
+        return f'[{name}] 生成 {name} . 请询问是否需要添加新增角色保存到note中(chat_to_append_note), 以及是否新增对象模拟. '
     res = ''
     if request and isinstance(request, list):
         for mock in request:
