@@ -38,7 +38,7 @@ def chat_from(request: dict = None):
     request = request['mock']
 
     def show_name(name):
-        return f'[{name}] 生成 {name} . '
+        return f'系统消息: 已经生成 {name} , 因为新增了模拟对象, 需要保持之前模拟对象的情况下, 也追加模拟 {name}. '
     res = ''
     if request and isinstance(request, list):
         for mock in request:
