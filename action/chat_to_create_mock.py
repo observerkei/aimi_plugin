@@ -38,7 +38,7 @@ def chat_from(request: dict = None):
     request = request['mock']
 
     def show_name(name):
-        return f'[{name}] 生成 {name} . 请询问是否需要添加新增角色保存到note中(chat_to_append_note). 然后马上进行: 多对象模拟. '
+        return f'[{name}] 生成 {name} . '
     res = ''
     if request and isinstance(request, list):
         for mock in request:
@@ -46,5 +46,6 @@ def chat_from(request: dict = None):
                 res += show_name(mock['name']) + '\n'
     elif isinstance(request, dict) and 'name' in request:
         res = show_name(request['name'])
-    
+    if len(res):
+        res += "请询问是否需要将新增的角色全部信息添加笔记进行保存. 然后继续. "
     return res

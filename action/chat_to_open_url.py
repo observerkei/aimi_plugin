@@ -49,7 +49,7 @@ def chat_from(request: dict = None):
     for tag in soup.find_all():
         if tag.string:
             if first and len(tag.string):
-                text += "以下是打开的链接内容, 请帮我进行总结: {\n"
+                text += "以下是打开的链接内容, 因为内容没有排版, 可以进行总结: {\n"
                 first = False
             text += tag.string
             if len(text) > 2048:
@@ -58,7 +58,7 @@ def chat_from(request: dict = None):
     
 
     if len(text):
-        text += "\n\n}. \n请将结果总结给我. "
+        text += "\n}. "
     
     if not len(text):
         text = 'error: 这个 url 无正常解析, 请替换其他 url 再重新尝试. '
