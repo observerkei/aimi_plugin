@@ -12,15 +12,18 @@ s_action = ActionToolItem(
     f"生成成功后要带上生成对象名称问是否需要保存,  "
     f"如果需要, 将需要保存的对象分别添加一条note. ",
     # 调用接口的时候填写的参数说明
-    request=[
-        {
-            "type": "object",
-            "name": "角色的名称: 用英文命名. 不可和其他人重复",
-            "expect": "生成期望: 为了解决什么问题生成这个角色. ",
-            "capacity": "能力分布: 这个角色具有什么能力",
-            "core": "思考特征: 这个角色思考的时候, 会遵循什么行为模式. ",
-        }
-    ],
+    request={
+        "type": "object",
+        "mock": [
+            {
+                "type": "object",
+                "name": "角色的名称: 用英文命名. 不可和其他人重复",
+                "expect": "生成期望: 为了解决什么问题生成这个角色. ",
+                "capacity": "能力分布: 这个角色具有什么能力",
+                "core": "思考特征: 这个角色思考的时候, 会遵循什么行为模式. ",
+            },
+        ],
+    },
     # 这里指明执行类型
     # system: 系统执行, 会有 chat_from 返回值
     # AI:     AI 执行, 没有 chat_from 返回值
@@ -32,6 +35,8 @@ s_action = ActionToolItem(
 # 如果什么都不返回的话说明没有返回值
 # request: 调用方法的时候的传参, 默认 None
 def chat_from(request: dict = None):
+    request = request['mock']
+    
     def show_name(name):
         return f'[{name}] 生成 {name} . 请询问是否需要添加note 角色的全部定义保存. '
     res = ''
