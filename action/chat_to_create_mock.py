@@ -46,6 +46,6 @@ def chat_from(request: dict = None):
                 res += show_name(mock['name']) + '\n'
     elif isinstance(request, dict) and 'name' in request:
         res = show_name(request['name'])
-    if len(res):
-        res += "请询问是否需要将新增的角色全部信息添加笔记进行保存. 然后继续. "
+    #if len(res):
+    #    res += "请询问是否需要将新增的角色全部信息添加笔记进行保存. 然后继续. "
     return res
