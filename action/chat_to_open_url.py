@@ -7,7 +7,9 @@ s_action = ActionToolItem(
     call="",
     # 当前 action 的描述
     # 说明这个action应该怎么使用
-    description="打开url链接: 将url打开后以本方式返回, 如果url写错, 或者网页无法访问, 那么就可能得到异常结果, 打开url链接能获取内容详情, 更好分析. ",
+    description="打开url链接: 将url打开后以本方式返回, "
+    f"如果url写错, 或者网页无法访问, 那么就可能得到异常结果, "
+    f"打开url链接能获取内容详情, 更好分析. ",
     # 调用接口的时候填写的参数说明
     request={
         "url": "需要转换的url链接",
