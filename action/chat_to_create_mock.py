@@ -30,25 +30,5 @@ s_action = ActionToolItem(
     # 这里指明执行类型
     # system: 系统执行, 会有 chat_from 返回值
     # AI:     AI 执行, 没有 chat_from 返回值
-    execute="system",
+    execute="AI",
 )
-
-
-# 在这里通过字符串返回这个接口的运算结果
-# 如果什么都不返回的话说明没有返回值
-# request: 调用方法的时候的传参, 默认 None
-def chat_from(request: dict = None):
-    request = request['mock']
-
-    def show_name(name):
-        return f'系统消息: 已经生成 {name} , 因为新增了模拟对象, 需要保持之前模拟对象的情况下, 也追加模拟 {name}. '
-    res = ''
-    if request and isinstance(request, list):
-        for mock in request:
-            if 'name' in mock:
-                res += show_name(mock['name']) + '\n'
-    elif isinstance(request, dict) and 'name' in request:
-        res = show_name(request['name'])
-    #if len(res):
-    #    res += "请询问是否需要将新增的角色全部信息添加笔记进行保存. 然后继续. "
-    return res
