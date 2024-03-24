@@ -72,8 +72,12 @@ class WolframAPI:
         link_think = f"""
 需求:
 1. 使用 latex 显示内容比如:
-' $$ 
-x_1 
+' $$
+\\begin{{split}}
+A
+& = 1 + x \\\\
+& = 2 + y \\\\
+\\end{{split}}
 $$ ' .
 
 2. 我需要你使用翻译功能, 帮我把 the wolfram response 的内容翻译成我的语言.
