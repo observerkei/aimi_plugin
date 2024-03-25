@@ -14,7 +14,7 @@ s_action = ActionToolItem(
     request={
         "search": "要搜索的内容",
         "num_results": "最多返回的搜索条目, 如果不填则默认3",
-        "lang": "搜索语言: 默认中文, 可以不填. 支持的有 zh/en/jp 等"
+        "lang": "搜索语言: 如果不填则默认中文. 支持的语言有 zh: 中文/en: 英文/jp: 日文等"
     },
     # 这里指明执行类型
     # system: 系统执行, 会有 chat_from 返回值
