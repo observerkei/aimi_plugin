@@ -331,7 +331,7 @@ To use the calculator wrap an equation in <calc> tags like this:
 
                 self.gemini = genai
 
-                self.gemini.configure(api_key=self.api_key)
+                self.gemini.configure(api_key=self.api_key, transport="rest")
                 models = [
                     m
                     for m in self.gemini.list_models()
@@ -354,7 +354,7 @@ To use the calculator wrap an equation in <calc> tags like this:
 
                 self.chatbot = palm
 
-                self.chatbot.configure(api_key=self.api_key)
+                self.chatbot.configure(api_key=self.api_key, transport="rest")
                 models = [
                     m
                     for m in self.chatbot.list_models()
