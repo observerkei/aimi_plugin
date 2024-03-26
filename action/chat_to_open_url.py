@@ -47,14 +47,14 @@ def chat_from(request: dict = None):
     # 返回所有文本
     text = ""
     first = True
-    limit = 2048
+    limit = 1500
     for tag in soup.find_all():
         if tag.string:
             if first and len(tag.string):
-                text += "以下是打开的链接内容, 因为内容没有排版, 可以进行总结: {\n"
+                text += "以下是打开的链接内容, 请查看是否为需要的内容: {\n"
                 first = False
             text += tag.string
-            if len(text) > 2048:
+            if len(text) > limit:
                 text += f'\n... ( 因为内容太长(>{limit}), 剩余部分已经省略. 如果没有想要的内容请尝试其他url链接. )\n'
                 break
     
