@@ -21,25 +21,16 @@ s_action = ActionToolItem(
 )
 
 
-# 在这里通过字符串返回这个接口的运算结果
-# 如果什么都不返回的话说明没有返回值
-# 不需要执行的话, 不需要写 chat_from
-# request: 调用方法的时候的传参, 默认 None
-def chat_from(request: dict = None):
-    import requests 
-    from bs4 import BeautifulSoup   
+def analysis_html(html, limit=1500):
+    from bs4 import BeautifulSoup
 
-    url = request['url']
-    resp = requests.get(url = url)
-
-    # 按照返回的编码解析
-    resp.encoding = resp.apparent_encoding
-    soup = BeautifulSoup(resp.text, "html.parser")
+    text = ""
+    soup = BeautifulSoup(html, "html.parser")
 
     # 删除js代码
     for tag in soup.find_all("script"):
         tag.decompose()
-        
+
     # 删除style样式代码
     for tag in soup.find_all("style"):
         tag.decompose()
@@ -47,22 +38,56 @@ def chat_from(request: dict = None):
     # 返回所有文本
     text = ""
     first = True
-    limit = 1500
     for tag in soup.find_all():
         if tag.string:
             if first and len(tag.string):
-                text += "以下是打开的链接内容, 请查看是否为需要的内容: {\n"
+                text += "以下是打开的链接内容, 如果没有需要的内容请尝试其他链接或方法: {\n"
                 first = False
             text += tag.string
             if len(text) > limit:
-                text += f'\n... ( 因为内容太长(>{limit}), 剩余部分已经省略. 如果没有想要的内容请尝试其他url链接. )\n'
+                text += f"\n... ( 因为内容太长(>{limit}), 剩余部分已经省略. )\n"
                 break
-    
 
     if len(text):
         text += "\n}. "
+
+    return text
+
+
+def simple_open(url, res_limit = 1500):
+    import requests
+
+    text = ""
+    with requests.Session() as sess:
+        sess.headers.update({"User-Agent": ("A request from a robot")})
+        sess.headers.update({"Accept": "application/json"})
+
+        resp = requests.get(url=url)
+
+        # 按照返回的编码解析
+        resp.encoding = resp.apparent_encoding
+
+        text = analysis_html(resp.text, res_limit)
     
+    return text
+
+
+# 在这里通过字符串返回这个接口的运算结果
+# 如果什么都不返回的话说明没有返回值
+# 不需要执行的话, 不需要写 chat_from
+# request: 调用方法的时候的传参, 默认 None
+def chat_from(request: dict = None):
+
+    res_limit = 1500
+    try:
+        res_limit = request["limit"]
+    except:
+        res_limit = 1500
+
+    url = request["url"]
+    text = simple_open(url, res_limit)
+
     if not len(text):
-        text = 'error: 这个 url 无正常解析, 请替换其他 url 再重新尝试. '
+        text = "error: 这个 url 无正常解析, 请替换其他 url 再重新尝试. "
 
     return text
