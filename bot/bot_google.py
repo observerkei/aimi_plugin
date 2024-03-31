@@ -325,7 +325,7 @@ To use the calculator wrap an equation in <calc> tags like this:
 
     def __bot_create(self):
 
-        if len(self.api_key) and not self.init_gemini:
+        if self.api_key and len(self.api_key) and not self.init_gemini:
             try:
                 import google.generativeai as genai
 
@@ -348,7 +348,7 @@ To use the calculator wrap an equation in <calc> tags like this:
                 self.init_gemini = False
                 log_err(f"fail to create gemini google: {e}")
 
-        if len(self.api_key) and not self.init_api:
+        if self.api_key and len(self.api_key) and not self.init_api:
             try:
                 import google.generativeai as palm
 
