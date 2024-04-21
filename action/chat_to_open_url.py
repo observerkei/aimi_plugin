@@ -54,6 +54,25 @@ def analysis_html(html, limit=1500):
     return text
 
 
+def browser_open(url, res_limit = 1500):
+    import time
+    from selenium import webdriver
+
+    options = webdriver.FirefoxOptions()
+    options.add_argument("--no-sandbox")
+    options.add_argument("--disable-dev-shm-usage")
+    options.add_argument("--headless")
+
+    driver = webdriver.Firefox(options=options)
+    driver.get(url)
+
+    time.sleep(5)
+    htmlSource = driver.page_source
+    driver.quit()
+
+    return analysis_html(htmlSource, res_limit)
+
+
 def simple_open(url, res_limit = 1500):
     import requests
 
@@ -86,6 +105,10 @@ def chat_from(request: dict = None):
 
     url = request["url"]
     text = simple_open(url, res_limit)
+
+    if len(text) < 300:
+        print(f"text: {text}\n\ntext len < 300, try use broswer open. ")
+        text = browser_open(url, res_limit)
 
     if not len(text):
         text = "error: 这个 url 无正常解析, 请替换其他 url 再重新尝试. "
