@@ -106,11 +106,13 @@ def chat_from(request: dict = None):
     url = request["url"]
     text = simple_open(url, res_limit)
 
-    if len(text) < 300:
+    if len(text) < 350:
         print(f"text: {text}\n\ntext len < 300, try use broswer open. ")
         text = browser_open(url, res_limit)
 
     if not len(text):
         text = "error: 这个 url 无正常解析, 请替换其他 url 再重新尝试. "
+
+    print(f"text len: {len(text)}")
 
     return text
