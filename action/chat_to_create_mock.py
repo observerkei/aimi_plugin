@@ -8,7 +8,7 @@ s_action = ActionToolItem(
     # 当前 action 的描述
     # 说明这个action应该怎么使用
     description="创建模拟对象: 只能用于生成模拟对象, 可同时生成多个对象. "
-    f"可以自动补全生成对象所需要的信息. ",
+        f"可以自动补全生成对象所需要的信息. ",
     # 调用接口的时候填写的参数说明
     request={
         "type": "object",
@@ -19,7 +19,8 @@ s_action = ActionToolItem(
                 "name": "角色的名称: 用英文命名. 不可和其他人重复",
                 "expect": "生成期望: 为了解决什么问题生成这个角色. ",
                 "capacity": "能力分布: 这个角色具有什么能力",
-                "core": "回复特征: 这个角色回复的时候, 会遵循什么格式进行回复. 如 模拟 Linux Shell时, 输入 'ls /tmp' 回复 '```shell\n1 2 3\n```'",
+                "core": "回复特征: 这个角色回复的时候, 会遵循什么格式进行回复. "
+                    "如 模拟 Linux Shell时, 输入 'ls /tmp' 回复 '```shell\n1 2 3\n```'",
             },
         ],
     },
