@@ -23,6 +23,7 @@ class OpenAIAPI:
     default_model: str = "gpt-3.5-turbo"
     chat_completions_models: List[str] = [
         "gpt-3.5-turbo",
+        "gpt-3.5-turbo-0125",
         "gpt-3.5-turbo-0301",
         "gpt-3.5-turbo-0613",
         "gpt-3.5-turbo-1106",
@@ -36,6 +37,16 @@ class OpenAIAPI:
         "gpt-4-32k",
         "gpt-4-32k-0314",
         "gpt-4-32k-0613",
+        "gpt-4-vision-preview",
+        "gpt-4-1106-vision-preview"
+        "gpt-4o",
+        "gpt-4o-2024-08-06",
+        "gpt-4o-mini",
+        "gpt-4o-mini-2024-07-18",
+        "o1-mini",
+        "o1-mini-2024-09-12",
+        "o1-preview",
+        "o1-preview-2024-09-12",
     ]
     init_web: bool = False
     init_api: bool = False
