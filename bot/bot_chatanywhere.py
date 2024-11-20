@@ -104,7 +104,7 @@ class ChatAnywhereAPI:
 
         log_dbg(f"use model: {bot_model}")
 
-        log_dbg(f"msg: {str(messages)}")
+        log_dbg(f"msg({str(type(messages))}): {str(messages)}")
 
         while req_cnt < self.max_repeat_times:
             req_cnt += 1
@@ -114,24 +114,19 @@ class ChatAnywhereAPI:
                 log_dbg("try ask: " + str(question))
                 res = None
 
-                completion = {"role": "", "content": ""}
-                for event in self.chatbot.ChatCompletion.create(
+                for event in self.chatbot.chat.completions.create(
                     model=bot_model,
                     messages=messages,
                     stream=True,
                 ):
-                    if event["choices"][0]["finish_reason"] == "stop":
-                        # log_dbg(f'recv complate: {completion}')
+                    if (event.choices[0].finish_reason 
+                        and event.choices[0].finish_reason == "stop"):
                         break
-                    for delta_k, delta_v in event["choices"][0]["delta"].items():
-                        if delta_k != "content":
-                            # skip none content
-                            continue
-                        # log_dbg(f'recv stream: {delta_k} = {delta_v}')
-                        completion[delta_k] += delta_v
+                    if (not event.choices[0].delta.content):
+                        continue
 
-                        answer["message"] = completion[delta_k]
-                        yield answer
+                    answer["message"] += event.choices[0].delta.content
+                    yield answer
 
                     res = event
 
@@ -160,17 +155,16 @@ class ChatAnywhereAPI:
             self.api_base and len(self.api_base)
         ):
             try:
+                import os
                 from openai import OpenAI
 
-                OpenAI.api_base = self.api_base
-                OpenAI.api_key = self.api_key
                 self.chatbot = OpenAI(
-                    api_key=self.api_ask
+                    api_key=self.api_key,
+                    base_url=self.api_base,
                 )
 
-                models = OpenAI.Model.list()
-                for model in models["data"]:
-                    log_dbg(f"avalible model: {str(model['id'])}")
+                models = self.chatbot.models.list()  
+                log_dbg(f"all model: {self.models}")
 
                 self.init = True
             except Exception as e:
