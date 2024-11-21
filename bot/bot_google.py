@@ -436,7 +436,9 @@ class Bot(BotBase):
 
     @property
     def init(self) -> bool:
-        return self.bot.init
+        if self.bot:
+            return self.bot.init
+        return False
 
     # when time call bot
     def is_call(self, caller: BotBase, ask_data: BotAskData) -> bool:
