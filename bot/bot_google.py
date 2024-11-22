@@ -152,7 +152,7 @@ Question: {{
                 response = {}
                 for chunk in model.generate_content(
                     question,
-                    stream=True,
+                    stream=False,
                     safety_settings=safety_settings,
                 ):
                     response = chunk
