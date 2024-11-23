@@ -3,8 +3,11 @@ from typing import Generator, List, Any
 
 from aimi_plugin.bot.type import Bot as BotBase
 from aimi_plugin.bot.type import BotAskData
+from aimi_plugin.bot.type import process_messages
 
 log_dbg, log_err, log_info = print, print, print
+
+make_history = 'tool.util.make_history'
 
 
 class GoogleAPI:
@@ -15,7 +18,7 @@ class GoogleAPI:
     cookie_NID: str = ""
     cookie_file: str = "./run/google_gemini_cookie.json"
     api_key: str = ""
-    max_requestion: int = 1024
+    max_messages: int = 1024
     max_repeat_times: int = 3
     trigger: List[str] = []
     init_api: bool = False
@@ -83,7 +86,7 @@ Question: {{
         aimi_name: str = "Aimi",
         nickname: str = "Master",
         preset: str = "",
-        history: str = "",
+        messages: str = [],
         timeout: int = 5,
     ) -> Generator[dict, None, None]:
 
@@ -95,6 +98,21 @@ Question: {{
                 model = self.models[0]
 
         if preset and not preset.isspace():
+            if not len(messages):
+                yield "messages failed. "
+            
+            log_dbg(f"input: {messages}")
+
+            context_messages = process_messages(
+                messages=messages, max_messages=self.max_messages)
+                
+            log_dbg(f"process_messages: {messages}")
+
+            log_dbg(messages)
+
+            talk_history = context_messages[1:-1]
+            history = make_history(talk_history)
+
             question = self.make_link_think(
                 question=question,
                 aimi_name=aimi_name,
@@ -385,10 +403,10 @@ To use the calculator wrap an equation in <calc> tags like this:
     def __load_setting(self, setting):
 
         try:
-            self.max_requestion = setting["max_requestion"]
+            self.max_messages = setting["max_messages"]
         except Exception as e:
             log_err("fail to load google config: " + str(e))
-            self.max_requestion = 1024
+            self.max_messages = 1024
         try:
             self.cookie_1PSID = setting["cookie_1PSID"]
         except Exception as e:
@@ -457,7 +475,7 @@ class Bot(BotBase):
             nickname=ask_data.nickname,
             aimi_name=ask_data.aimi_name,
             preset=ask_data.preset,
-            history=ask_data.history,
+            messages=ask_data.messages,
         )
 
     # exit bot
@@ -466,10 +484,11 @@ class Bot(BotBase):
 
     # init bot
     def when_init(self, caller: BotBase, setting: dict = None):
-        global log_info, log_dbg, log_err
+        global log_info, log_dbg, log_err, make_history
         log_info = caller.bot_log_info
         log_dbg = caller.bot_log_dbg
         log_err = caller.bot_log_err
+        make_history = caller.bot_make_history
 
         self.setting = setting
         self.bot = GoogleAPI(self.setting)

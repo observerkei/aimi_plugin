@@ -65,6 +65,9 @@ class Bot:
     def bot_load_setting(self, type: str):
         pass
 
+    def bot_make_history(self, talk_history: List) -> str:
+        pass
+
     def bot_log_dbg(self, msg: str):
         pass
 
@@ -74,6 +77,48 @@ class Bot:
     def bot_log_info(self, msg: str):
         pass
 
+# OpenAI Messages 结构长度限制。
+def process_messages(messages, max_messages = 1024):
+    try:
+        # Step 1: 新建一个 new_messages 数组
+        new_messages = []
+        
+        # Step 2: 将 messages 的第一个数据直接加到 new_messages 中
+        new_messages.append(messages[0])
+        # 剔除 第一个数据，方便处理
+        messages = messages[1:]
+        
+        # Step 3: 将 messages 的最后一个 role: user 的数据也加到 new_messages 中
+        last_user_message = None
+        user_cnt = 0
+        assistant_cnt = 0
+        message_pair = []
+
+        for message in reversed(messages):
+            if message['role'] == 'user':
+                user_cnt = user_cnt + 1
+                if user_cnt == 1:
+                    # 默认倒数第一个是 user
+                    new_messages.insert(1, message)
+                else: 
+                    message_pair.insert(0, message)
+
+            elif message['role'] == 'assistant':
+                assistant_cnt = assistant_cnt + 1
+                message_pair = [message]
+
+
+            if user_cnt > 1 and user_cnt == assistant_cnt + 1:
+                # 倒序，先 assistant 再 user 
+                # user - 1 == assistant 说明是一组 
+                if len(str(message_pair)) + len(str(new_messages)) < max_messages:
+                    # 先插 assistant 再插 user，这样顺序是对的。
+                    new_messages.insert(1, message_pair[1])
+                    new_messages.insert(1, message_pair[0])
+        return new_messages
+    except Exception as e:
+        log_dbg(f'process messages fail: {str(e)}')
+        return message
 
 class OpenAIBot:
     type: str = "openai"
@@ -131,46 +176,6 @@ class OpenAIBot:
 
         return models
 
-    def process_messages(messages, max_messages=1024):
-        try:
-            # Step 1: 新建一个 new_messages 数组
-            new_messages = []
-            
-            # Step 2: 将 messages 的第一个数据直接加到 new_messages 中
-            new_messages.append(messages[0])
-            
-            # Step 3: 将 messages 的最后一个 role: user 的数据也加到 new_messages 中
-            last_user_message = None
-            user_cnt = 0
-            assistant_cnt = 0
-            message_pair = []
-
-            for message in reversed(messages):
-                if message['role'] == 'user':
-                    user_cnt = user_cnt + 1
-                    if user_cnt == 1:
-                        # 默认倒数第一个是 user
-                        new_messages.insert(1, message)
-                    else: 
-                        message_pair.insert(0, message)
-
-                elif message['role'] == 'assistant':
-                    assistant_cnt = assistant_cnt + 1
-                    message_pair = [message]
-
-
-                if user_cnt > 1 and user_cnt == assistant_cnt + 1:
-                    # 倒序，先 assistant 再 user 
-                    # user - 1 == assistant 说明是一组 
-                    if len(str(message_pair)) + len(str(new_messages)) < max_messages:
-                        # 先插 assistant 再插 user，这样顺序是对的。
-                        new_messages.insert(1, message_pair[1])
-                        new_messages.insert(1, message_pair[0])
-            return new_messages
-        except Exception as e:
-            log_dbg(f'process messages fail: {str(e)}')
-            return message
-
     def ask(
         self,
         model: str,
@@ -211,7 +216,7 @@ class OpenAIBot:
         
         if len(str(messages)) > self.max_messages:
             log_dbg(f"messages > {max_messages}, try fix")
-            messages = self.process_messages(messages, self.max_messages)
+            messages = process_messages(messages, self.max_messages)
 
         req_cnt = 0
         question = messages[-1]["content"]
