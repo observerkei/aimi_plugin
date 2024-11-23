@@ -236,7 +236,7 @@ To use the calculator wrap an equation in <calc> tags like this:
                         prompt=calc_prompt,
                         stop_sequences=["</calc>"],
                         # The maximum length of the response
-                        max_output_tokens=4096,
+                        # max_output_tokens=4096,
                     )
 
                     try:
