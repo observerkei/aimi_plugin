@@ -59,9 +59,6 @@ class Bot:
     def when_init(self, caller: 'Bot', setting: dict = None):
         pass
 
-    def bot_set_response(self, code: int, message: str) -> Any:
-        pass
-
     def bot_log_dbg(self, msg: str):
         pass
 
