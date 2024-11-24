@@ -3,11 +3,9 @@ from typing import Generator, List, Any
 
 from aimi_plugin.bot.type import Bot as BotBase
 from aimi_plugin.bot.type import BotAskData
-from aimi_plugin.bot.type import process_messages
+from aimi_plugin.bot.type import process_messages, make_history
 
 log_dbg, log_err, log_info = print, print, print
-
-make_history = 'tool.util.make_history'
 
 
 class GoogleAPI:
@@ -484,11 +482,10 @@ class Bot(BotBase):
 
     # init bot
     def when_init(self, caller: BotBase, setting: dict = None):
-        global log_info, log_dbg, log_err, make_history
+        global log_info, log_dbg, log_err
         log_info = caller.bot_log_info
         log_dbg = caller.bot_log_dbg
         log_err = caller.bot_log_err
-        make_history = caller.bot_make_history
 
         self.setting = setting
         self.bot = GoogleAPI(self.setting)

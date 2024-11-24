@@ -62,12 +62,6 @@ class Bot:
     def bot_set_response(self, code: int, message: str) -> Any:
         pass
 
-    def bot_load_setting(self, type: str):
-        pass
-
-    def bot_make_history(self, talk_history: List) -> str:
-        pass
-
     def bot_log_dbg(self, msg: str):
         pass
 
@@ -76,6 +70,26 @@ class Bot:
 
     def bot_log_info(self, msg: str):
         pass
+
+def make_history(talk_history: List[Dict]) -> str:
+    history = ""
+
+    talk_count = 0
+    for talk in talk_history:
+        content = ""
+        it = ""
+        for k, v in talk.items():
+            if k == "role" and v == "user":
+                talk_count += 1
+                it = "我说:"
+                continue
+            elif k == "role" and v == "assistant":
+                it = "你说:"
+            if k != "content":
+                continue
+            content = v
+        history += f"{talk_count} {it} {content}\n"
+    return history
 
 # OpenAI Messages 结构长度限制。
 def process_messages(messages, max_messages = 1024):
