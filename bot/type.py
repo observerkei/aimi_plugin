@@ -226,7 +226,7 @@ class OpenAIBot:
             return
         
         if len(str(messages)) > self.max_messages:
-            log_dbg(f"messages > {max_messages}, try fix")
+            log_dbg(f"messages > {self.max_messages}, try fix")
             messages = process_messages(messages, self.max_messages)
 
         req_cnt = 0
