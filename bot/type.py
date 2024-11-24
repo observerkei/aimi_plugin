@@ -118,13 +118,15 @@ def process_messages(messages, max_messages = 1024):
                 assistant_cnt = assistant_cnt + 1
                 message_pair = [message]
 
-
             if user_cnt > 1 and user_cnt == assistant_cnt + 1:
                 # 倒序，先 assistant 再 user 
                 # user - 1 == assistant 说明是一组 
                 if len(str(message_pair)) + len(str(new_messages)) < max_messages:
                     # 先插 assistant 再插 user，这样顺序是对的。
-                    new_messages.insert(1, message_pair[1])
+                    if len(message_pair) > 1:
+                        new_messages.insert(1, message_pair[1])
+                    else:
+                        log_dbg(f"only one pair");
                     new_messages.insert(1, message_pair[0])
         return new_messages
     except Exception as e:
@@ -197,7 +199,7 @@ class OpenAIBot:
             yield from self.api_ask(model, messages, timeout)
         except Exception as e:
             log_err(f"fail to api ask: {str(e)}")
-            yield f'fail to ask: {str(e)}'
+            yield { "code": -1, message: f'fail to ask: {str(e)}'}
 
     def api_ask(
         self,
