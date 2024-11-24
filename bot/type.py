@@ -101,33 +101,27 @@ def process_messages(messages, max_messages = 1024):
         
         # Step 3: 将 messages 的最后一个 role: user 的数据也加到 new_messages 中
         last_user_message = None
-        user_cnt = 0
+        cnt = 0
         assistant_cnt = 0
-        message_pair = []
+        message_pair = {}
+
+        # 先放入现在的问题
+        new_messages.insert(1, messages[-1])
 
         for message in reversed(messages):
-            if message['role'] == 'user':
-                user_cnt = user_cnt + 1
-                if user_cnt == 1:
-                    # 默认倒数第一个是 user
-                    new_messages.insert(1, message)
-                else: 
-                    message_pair.insert(0, message)
+            cnt = cnt + 1
 
-            elif message['role'] == 'assistant':
-                assistant_cnt = assistant_cnt + 1
-                message_pair = [message]
+            # 跳过现在的问题
+            if cnt == 1:
+                continue
 
-            if user_cnt > 1 and user_cnt == assistant_cnt + 1:
-                # 倒序，先 assistant 再 user 
-                # user - 1 == assistant 说明是一组 
-                if len(str(message_pair)) + len(str(new_messages)) < max_messages:
-                    # 先插 assistant 再插 user，这样顺序是对的。
-                    if len(message_pair) > 1:
-                        new_messages.insert(1, message_pair[1])
-                    else:
-                        log_dbg(f"only one pair");
-                    new_messages.insert(1, message_pair[0])
+            if len(str(new_messages)) > max_messages:
+                log_dbg(f"messages len({messages}) > max_messages{max_messages}, "
+                    f"new_messages({len(new_messages)})")
+                break
+
+            new_messages.insert(1, message)
+
         return new_messages
     except Exception as e:
         log_dbg(f'process messages fail: {str(e)}')
