@@ -258,7 +258,7 @@ class OpenAIBot:
 
                     res = event
 
-                log_dbg(f"res: {str(    )}")
+                log_dbg(f"res: {str(res)}")
 
                 answer["code"] = 0
                 yield answer
@@ -278,6 +278,9 @@ class OpenAIBot:
             if answer["code"] == 0:
                 break
 
+    def update_models(self, models):
+        pass
+
     def __create_bot(self) -> bool:
         if (self.api_key and len(self.api_key)) and (
             self.api_base and len(self.api_base)
@@ -291,7 +294,9 @@ class OpenAIBot:
                     base_url=self.api_base,
                 )
 
-                models = self.chatbot.models.list()  
+                models = self.chatbot.models.list()
+                self.update_models(models)
+
                 log_dbg(f"all model: {self.models}")
 
                 self.init = True
