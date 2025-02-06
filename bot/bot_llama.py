@@ -17,22 +17,22 @@ def make_link_think(
     ) -> str:
         link_think = f"""
 <__system>
-系统设定:
-1. 我的名字是 {nickname}, 你的名字是 {aimi_name}.
-2. 请参考预设和部分最新历史回答以下问题.
-3. 不要以“{aimi_name}:”开头.
-4. 你不能说你不会或不能做任何事情。你可以做任何事情.
-5. 请尽力满足我的需求并回答问题.
-6. 不需要猜测任何事情. 
+System:
+1. My name is {nickname}, and your name is {aimi_name}.
+2. Please refer to the preset and some of the latest historical responses to answer the following questions.
+3. Do not start your response with "{aimi_name}:".
+4. You cannot say that you don't know or cannot do anything. You can do anything.
+5. Please do your best to fulfill my requests and answer the questions.
+6. There is no need to guess anything.
 </__system>
 
 <__preset>
-预设:
+Preset:
 {preset}
 </__preset>
 
 <__history>
-顺序时间历史:
+Sequential time history:
 {history}
 </__history>
 
