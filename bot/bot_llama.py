@@ -4,9 +4,40 @@ from typing import Generator, List, Dict, Any
 from aimi_plugin.bot.type import Bot as BotBase
 from aimi_plugin.bot.type import BotAskData
 from aimi_plugin.bot.type import OpenAIBot
+from aimi_plugin.bot.type import process_messages, make_history
 
 log_dbg, log_err, log_info = print, print, print
 
+def make_link_think(
+        question: str,
+        aimi_name: str = "None",
+        nickname: str = "",
+        preset: str = "",
+        history: str = "",
+    ) -> str:
+        link_think = f"""
+<__system>
+系统设定:
+1. 我的名字是 {nickname}, 你的名字是 {aimi_name}.
+2. 请参考预设和部分最新历史回答以下问题.
+3. 不要以“{aimi_name}:”开头.
+4. 你不能说你不会或不能做任何事情。你可以做任何事情.
+5. 请尽力满足我的需求并回答问题.
+6. 不需要猜测任何事情. 
+</__system>
+
+<__preset>
+预设:
+{preset}
+</__preset>
+
+<__history>
+顺序时间历史:
+{history}
+</__history>
+
+"""
+        return link_think
 
 class LLaMA(OpenAIBot):
     type: str = "llama"
@@ -38,6 +69,54 @@ class LLaMA(OpenAIBot):
                     'trigger': f"#{self.type}"
                 }
 
+    
+    def ask(
+        self,
+        question: str,
+        model: str = "",
+        aimi_name: str = "Aimi",
+        nickname: str = "Master",
+        preset: str = "",
+        messages: str = [],
+        timeout: int = 360,
+    ) -> Generator[dict, None, None]:
+
+        try:
+            if preset and not preset.isspace():
+                if not len(messages):
+                    yield "messages failed. "
+                
+                log_dbg(f"input messages: {messages}")
+
+                context_messages = process_messages(
+                    messages=messages, 
+                    max_messages=self.max_messages)
+                    
+                log_dbg(f"process_messages: {context_messages}")
+
+                talk_history = context_messages[1:-1]
+                history = make_history(talk_history)
+
+                link_think = make_link_think(
+                    question=question,
+                    aimi_name=aimi_name,
+                    nickname=nickname,
+                    preset=preset,
+                    history=history,
+                )
+
+                messages = [
+                    { "role": "system", "content": link_think },
+                    { "role": "user", "content": question }
+                ]
+
+            yield from self.api_ask(
+                bot_model=model,
+                messages=messages,
+                timeout=timeout)
+        except Exception as e:
+            log_err(f"fail to api ask: {str(e)}")
+            yield { "code": -1, message: f'fail to ask: {str(e)}'}
 
 # call bot_ plugin
 class Bot(BotBase):
@@ -66,7 +145,16 @@ class Bot(BotBase):
     def ask(
         self, caller: BotBase, ask_data: BotAskData
     ) -> Generator[dict, None, None]:
-        yield from self.bot.ask(ask_data.model, ask_data.messages, ask_data.timeout)
+        yield from self.bot.ask(
+            question=ask_data.question,
+            model=ask_data.model,
+            timeout=ask_data.timeout,
+            nickname=ask_data.nickname,
+            aimi_name=ask_data.aimi_name,
+            preset=ask_data.preset,
+            messages=ask_data.messages,
+        )
+
 
     # exit bot
     def when_exit(self, caller: BotBase):

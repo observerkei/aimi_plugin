@@ -85,7 +85,7 @@ def make_history(talk_history: List[Dict]) -> str:
             if k != "content":
                 continue
             content = v
-        history += f"{talk_count} {it} {content}\n"
+        history += f"{talk_count}. {it} {content}. \n"
     return history
 
 # OpenAI Messages 结构长度限制。
