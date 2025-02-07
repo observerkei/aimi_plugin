@@ -90,6 +90,10 @@ def make_history(talk_history: List[Dict]) -> str:
 
 # OpenAI Messages 结构长度限制。
 def process_messages(messages, max_messages = 1024):
+    if len(messages) <= 1:
+        log_dbg(f"skip messages len: {len(messages)}")
+        return messages
+
     try:
         # Step 1: 新建一个 new_messages 数组
         new_messages = []
@@ -278,7 +282,7 @@ class OpenAIBot:
             if answer["code"] == 0:
                 break
 
-    def update_models(self, models):
+    def update_models(self):
         pass
 
     def __create_bot(self) -> bool:
@@ -294,9 +298,7 @@ class OpenAIBot:
                     base_url=self.api_base,
                 )
 
-                models = self.chatbot.models.list()
-                self.update_models(models)
-
+                self.update_models(self)
                 log_dbg(f"all model: {self.models}")
 
                 self.init = True

@@ -48,7 +48,8 @@ class LLaMA(OpenAIBot):
         # 重新初始化基类，防止影响到其他继承
         super().__init__(caller, setting)
 
-    def update_models(self, models):
+    def update_models(self):
+        models = self.chatbot.models.list(timeout=1)
         self.models = {}
 
         for model in models:
