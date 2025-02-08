@@ -9,7 +9,7 @@ log_dbg, log_err, log_info = print, print, print
 
 
 class WolframAPI:
-    type: str = "wolfram"
+    type: str = BotType.Wolfram
     client: Any
     app_id: str = ""
     trigger: List[str] = []

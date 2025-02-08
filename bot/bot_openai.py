@@ -2,13 +2,13 @@ import time
 from typing import Generator, List, Dict, Any
 
 from aimi_plugin.bot.type import Bot as BotBase
-from aimi_plugin.bot.type import BotAskData
+from aimi_plugin.bot.type import BotAskData, BotType
 
 log_dbg, log_err, log_info = print, print, print
 
 
 class OpenAIAPI:
-    type: str = "openai"
+    type: str = BotType.OpenAI
     openai: Any
     chatbot: Any
     max_requestion: int = 1024

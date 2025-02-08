@@ -8,13 +8,13 @@ import random
 import json
 
 from aimi_plugin.bot.type import Bot as BotBase
-from aimi_plugin.bot.type import BotAskData
+from aimi_plugin.bot.type import BotAskData, BotType
 
 log_dbg, log_err, log_info = print, print, print
 
 
 class BingAPI:
-    type: str = "bing"
+    type: str = BotType.Bing
     chatbot: Chatbot
     max_requestion: int = 1024
     max_repeat_times: int = 3

@@ -13,6 +13,8 @@ class BotType:
     Task: str = "task"
     LLaMA: str = 'llama'
     XAI: str = "xai"
+    ChatAnywhere: str = "chatanywhere"
+    Poe: str = "poe"
 
 class BotAskData(BaseModel):
     question: Optional[str]
@@ -132,7 +134,7 @@ def process_messages(messages, max_messages = 1024):
         return message
 
 class OpenAIBot:
-    type: str = "openai"
+    type: str = BotType.OpenAI
     max_messages: int = 1024
     max_repeat_times: int = 3
     max_request_minute_times: int = 10

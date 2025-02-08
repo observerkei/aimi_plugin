@@ -2,7 +2,7 @@ import time
 from typing import Generator, List, Dict, Any
 
 from aimi_plugin.bot.type import Bot as BotBase
-from aimi_plugin.bot.type import BotAskData
+from aimi_plugin.bot.type import BotAskData, BotType
 from aimi_plugin.bot.type import OpenAIBot
 from aimi_plugin.bot.type import process_messages, make_history
 
@@ -40,7 +40,7 @@ Sequential time history:
         return link_think
 
 class LLaMA(OpenAIBot):
-    type: str = "llama"
+    type: str = BotType.LLaMA
     api_key: str = "sk-no-key-required"
     init: bool = False
 

@@ -2,14 +2,14 @@ import time
 from typing import Generator, List, Any
 
 from aimi_plugin.bot.type import Bot as BotBase
-from aimi_plugin.bot.type import BotAskData
+from aimi_plugin.bot.type import BotAskData, BotType
 from aimi_plugin.bot.type import process_messages, make_history
 
 log_dbg, log_err, log_info = print, print, print
 
 
 class GoogleAPI:
-    type: str = "google"
+    type: str = BotType.Google
     chatbot: Any
     cookie_1PSIDTS: str = ""
     cookie_1PSID: str = ""

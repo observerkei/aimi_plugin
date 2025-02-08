@@ -3,13 +3,13 @@ import time
 
 from aimi_plugin.bot.type import Bot as BotBase
 from aimi_plugin.bot.type import BotAskData
-from aimi_plugin.bot.type import OpenAIBot
+from aimi_plugin.bot.type import OpenAIBot, BotType
 
 log_dbg, log_info, log_err = print, print, print
 
 
 class ChatAnywhereAPI(OpenAIBot):
-    type: str = "chatanywhere"
+    type: str = BotType.ChatAnywhere
     init: bool = False
 
     def __init__(self, caller: BotBase,  setting: Any):

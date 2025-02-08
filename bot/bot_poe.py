@@ -4,11 +4,11 @@ import poe
 
 log_dbg, log_err, log_info = print, print, print
 from aimi_plugin.bot.type import Bot as BotBase
-from aimi_plugin.bot.type import BotAskData
+from aimi_plugin.bot.type import BotAskData, BotType
 
 
 class PoeAPI:
-    type: str = "poe"
+    type: str = BotType.Poe
     chatbot: Any
     max_requestion: int = 1024
     max_repeat_times: int = 3
