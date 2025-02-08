@@ -300,7 +300,7 @@ class OpenAIBot:
                     base_url=self.api_base,
                 )
 
-                self.update_models(self)
+                self.update_models()
                 log_dbg(f"all model: {self.models}")
 
                 self.init = True
