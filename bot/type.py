@@ -1,4 +1,5 @@
 from typing import Generator, List, Dict, Any, Tuple, Optional, Union
+from openai import OpenAI
 from pydantic import BaseModel, constr
 import time
 
@@ -144,7 +145,7 @@ class OpenAIBot:
     api_base: str = ""
     models: Dict[str, Dict] = {}
     init: bool = False
-    chatbot: Any
+    chatbot: OpenAI
 
     def is_call(self, question: str) -> bool:
         for default in self.models["default"]["trigger"]:
@@ -193,7 +194,7 @@ class OpenAIBot:
         self,
         model: str,
         messages: List[Dict] = [],
-        timeout: int = 360,
+        timeout: int = 60,
     ) -> Generator[dict, None, None]:
         try:
             yield from self.api_ask(model, messages, timeout)
@@ -205,7 +206,7 @@ class OpenAIBot:
         self,
         bot_model: str,
         messages: List[Dict] = [],
-        timeout: int = 360,
+        timeout: int = 60,
     ) -> Generator[dict, None, None]:
         answer = {"message": "", "code": 1}
 
@@ -252,6 +253,7 @@ class OpenAIBot:
                     model=bot_model,
                     messages=messages,
                     stream=True,
+                    timeout=timeout,
                 ):
                     if (event.choices[0].finish_reason 
                         and event.choices[0].finish_reason == "stop"):
@@ -272,13 +274,19 @@ class OpenAIBot:
             except Exception as e:
                 log_err("fail to ask: " + str(e))
                 log_dbg("server fail, sleep 15")
-                time.sleep(15)
                 log_dbg(f"try recreate {self.type} bot")
                 self.__create_bot()
 
-                answer["message"] = str(e)
+                wait_time = 5
+                answer["message"] = f"{str(e)}: {timeout}s"
+                
+                if req_cnt < self.max_repeat_times:
+                    answer["message"] +=", Try again in {wait_time} seconds."
                 answer["code"] = -1
+                
                 yield answer
+                if req_cnt < self.max_repeat_times:
+                    time.sleep(wait_time)
 
             # request complate.
             if answer["code"] == 0:

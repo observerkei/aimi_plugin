@@ -55,14 +55,14 @@ class PoeAPI:
     def ask(
         self,
         question: str,
-        timeout: int = 360,
+        timeout: int = 60,
     ) -> Generator[dict, None, None]:
         yield from self.api_ask(question, timeout)
 
     def api_ask(
         self,
         question: str,
-        timeout: int = 360,
+        timeout: int = 60,
     ) -> Generator[dict, None, None]:
         answer = {"message": "", "code": 1}
 

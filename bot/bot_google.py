@@ -292,7 +292,7 @@ To use the calculator wrap an equation in <calc> tags like this:
     def web_ask(
         self,
         question: str,
-        timeout: int = 360,
+        timeout: int = 60,
     ) -> Generator[dict, None, None]:
         answer = {"message": "", "code": 1}
 

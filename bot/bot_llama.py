@@ -79,7 +79,7 @@ class LLaMA(OpenAIBot):
         nickname: str = "Master",
         preset: str = "",
         messages: str = [],
-        timeout: int = 360,
+        timeout: int = 5,
     ) -> Generator[dict, None, None]:
 
         try:
@@ -110,11 +110,12 @@ class LLaMA(OpenAIBot):
                     { "role": "system", "content": link_think },
                     { "role": "user", "content": question }
                 ]
-
+            
+            # The function is not stable, and the time limit is carried out
             yield from self.api_ask(
                 bot_model=model,
                 messages=messages,
-                timeout=timeout)
+                timeout=10)
         except Exception as e:
             log_err(f"fail to api ask: {str(e)}")
             yield { "code": -1, message: f'fail to ask: {str(e)}'}

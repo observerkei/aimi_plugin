@@ -140,7 +140,7 @@ class OpenAIAPI:
         self,
         question: str,
         conversation_id: str = "",
-        timeout: int = 360,
+        timeout: int = 60,
     ) -> Generator[dict, None, None]:
         answer = {"message": "", "conversation_id": conversation_id, "code": 1}
 
