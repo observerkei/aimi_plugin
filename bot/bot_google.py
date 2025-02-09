@@ -324,6 +324,9 @@ To use the calculator wrap an equation in <calc> tags like this:
                 log_dbg("server fail, maybe need check cookie")
 
                 answer["message"] = str(e)
+                if req_cnt < self.max_repeat_times:
+                    answer["message"] += f", Try again in 5s...\n"
+
                 answer["code"] = -1
                 yield answer
 

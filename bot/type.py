@@ -281,9 +281,9 @@ class OpenAIBot:
                 answer["message"] = f"{str(e)}: {timeout}s"
                 
                 if req_cnt < self.max_repeat_times:
-                    answer["message"] +=", Try again in {wait_time} seconds."
+                    answer["message"] += f", Try again in {wait_time}s."
                 answer["code"] = -1
-                
+
                 yield answer
                 if req_cnt < self.max_repeat_times:
                     time.sleep(wait_time)
@@ -367,7 +367,7 @@ class OpenAIBot:
             self.max_repeat_times = setting["max_repeat_times"]
         except Exception as e:
             log_err(f"fail to load {self.type} config: " + str(e))
-            self.max_repeat_times = 3
+            self.max_repeat_times = 1
         try:
             self.api_key = setting["api_key"]
         except Exception as e:
