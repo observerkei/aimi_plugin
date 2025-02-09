@@ -215,11 +215,11 @@ class OpenAIAPI:
     ) -> Generator[dict, None, None]:
         answer = {"message": "", "code": 1}
 
-        # yield
-        #   "message": 'not support api!',
-        #   "conversation_id": conversation_id,
-        #   "code": -1
-        # }
+        if api_key and len(api_key) and (
+            api_key != self.api_key
+        ):
+            self.api_key = api_key
+            self.__init_bot()
 
         req_cnt = 0
         if not model or not len(model) or (model not in self.chat_completions_models):
@@ -307,7 +307,7 @@ class OpenAIAPI:
             self.init_web = True
             self.models.append("web")
 
-        api_key = self.api_key
+        api_key = self.api_key if len(self.api_key) else "sk-no-key-required"
         if api_key and len(api_key):
             try:
                 import os
@@ -330,7 +330,8 @@ class OpenAIAPI:
                         continue
                     self.models.append(model.id)
                 log_dbg(f"avalible model: {self.models}")
-                self.init_api = True
+                if len(self.models) > 0:
+                    self.init_api = True
             except Exception as e:
                 log_err(f"fail to get model {self.type} : {e}")
 
@@ -377,7 +378,7 @@ class OpenAIAPI:
             self.api_key = setting["api_key"]
         except Exception as e:
             log_err(f"fail to load {self.type} config: " + str(e))
-            self.api_key = ""
+            self.api_key = "sk-no-key-required"
 
 
 # call bot_ plugin
