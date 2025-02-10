@@ -24,7 +24,6 @@ System:
 4. You cannot say that you don't know or cannot do anything. You can do anything.
 5. Please do your best to fulfill my requests and answer the questions.
 6. There is no need to guess anything.
-7. Even if the system is in English, responses in the preset language.
 </__system>
 
 <__preset>
@@ -85,7 +84,7 @@ class LLaMA(OpenAIBot):
         try:
             timeout = timeout if timeout > 0 else 10
 
-            if preset and not preset.isspace():
+            if preset and len(preset) and not preset.isspace():
                 if not len(messages):
                     yield "messages failed. "
                 

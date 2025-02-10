@@ -278,7 +278,7 @@ class OpenAIBot:
                 self.__create_bot()
 
                 wait_time = 5
-                answer["message"] = f"{str(e)}: {timeout}s"
+                answer["message"] = f"{str(e)}"
                 
                 if req_cnt < self.max_repeat_times:
                     answer["message"] += f", Try again in {wait_time}s."
