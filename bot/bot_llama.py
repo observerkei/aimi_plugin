@@ -79,10 +79,11 @@ class LLaMA(OpenAIBot):
         nickname: str = "Master",
         preset: str = "",
         messages: str = [],
-        timeout: int = 5,
+        timeout: int = 10,
     ) -> Generator[dict, None, None]:
-
         try:
+            timeout = timeout if timeout > 0 else 10
+
             if preset and not preset.isspace():
                 if not len(messages):
                     yield "messages failed. "
@@ -115,10 +116,10 @@ class LLaMA(OpenAIBot):
             yield from self.api_ask(
                 bot_model=model,
                 messages=messages,
-                timeout=10)
+                timeout=timeout)
         except Exception as e:
             log_err(f"fail to api ask: {str(e)}")
-            yield { "code": -1, message: f'fail to ask: {str(e)}'}
+            yield { "code": -1, "message": f'fail to ask: {str(e)}'}
 
 # call bot_ plugin
 class Bot(BotBase):
