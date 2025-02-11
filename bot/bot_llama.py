@@ -70,6 +70,41 @@ class LLaMA(OpenAIBot):
                     'trigger': f"#{self.type}"
                 }
 
+    def make_link_think_by_messages(
+        self, 
+        preset, 
+        messages, 
+        question, 
+        aimi_name, 
+        nickname,
+    ):
+        if not len(messages):
+            return "messages failed. "
+
+        log_dbg(f"input messages: {messages}")
+
+        context_messages = process_messages(
+            messages=messages, 
+            max_messages=self.max_messages)
+
+        log_dbg(f"process_messages: {context_messages}")
+
+        talk_history = context_messages[1:-1]
+        history = make_history(talk_history)
+
+        link_think = make_link_think(
+            question=question,
+            aimi_name=aimi_name,
+            nickname=nickname,
+            preset=preset,
+            history=history,
+        )
+
+        return [
+            { "role": "system", "content": link_think },
+            { "role": "user", "content": question }
+        ]
+
     
     def ask(
         self,
@@ -83,35 +118,8 @@ class LLaMA(OpenAIBot):
     ) -> Generator[dict, None, None]:
         try:
             timeout = timeout if timeout > 0 else 10
-
-            if preset and len(preset) and not preset.isspace():
-                if not len(messages):
-                    yield "messages failed. "
-                
-                log_dbg(f"input messages: {messages}")
-
-                context_messages = process_messages(
-                    messages=messages, 
-                    max_messages=self.max_messages)
-                    
-                log_dbg(f"process_messages: {context_messages}")
-
-                talk_history = context_messages[1:-1]
-                history = make_history(talk_history)
-
-                link_think = make_link_think(
-                    question=question,
-                    aimi_name=aimi_name,
-                    nickname=nickname,
-                    preset=preset,
-                    history=history,
-                )
-
-                messages = [
-                    { "role": "system", "content": link_think },
-                    { "role": "user", "content": question }
-                ]
-            
+            # custom preset
+            # messages = self.make_link_think_by_messages(preset=preset, messages=messages)
             # The function is not stable, and the time limit is carried out
             yield from self.api_ask(
                 bot_model=model,
