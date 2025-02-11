@@ -43,6 +43,7 @@ class LLaMA(OpenAIBot):
     type: str = BotType.LLaMA
     api_key: str = "sk-no-key-required"
     init: bool = False
+    timeout: int = 10
 
     def __init__(self, caller: BotBase,  setting: Any):
         # 重新初始化基类，防止影响到其他继承
@@ -117,7 +118,7 @@ class LLaMA(OpenAIBot):
         timeout: int = 10,
     ) -> Generator[dict, None, None]:
         try:
-            timeout = timeout if timeout > 0 else 10
+            timeout = timeout if timeout > 0 else self.timeout
             # custom preset
             # messages = self.make_link_think_by_messages(preset=preset, messages=messages)
             # The function is not stable, and the time limit is carried out

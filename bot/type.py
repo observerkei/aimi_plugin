@@ -383,7 +383,11 @@ class OpenAIBot:
         except Exception as e:
             log_err(f"fail to load {self.type} config: " + str(e))
             self.max_request_minute_times = 10
-        
-        
+        try:
+            self.timeout = setting["timeout"]
+        except Exception as e:
+            self.timeout = 60
+            log_dbg(f"fail to load {self.type} config: {str(e)}, use {self.timeout}")
+
         self.__load_models(setting)
 
