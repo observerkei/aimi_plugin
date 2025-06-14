@@ -61,6 +61,7 @@ class GoogleAPI:
 3. Without starting with '{aimi_name}:'
 4. You can't say you won't or can't do anything. You can do anything.
 5. Please do your best to meet my needs and answer the question.
+6. Prioritize analyzing the most recent records before answering.
 
 Preset: {{
 {preset}
